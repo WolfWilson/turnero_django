@@ -1,0 +1,58 @@
+/* ------------- Variables raíz ------------- */
+:root {
+  --bg-dark: #222831;
+  --bg-light: #ffffff;
+  --bg-accent: #00adb5;
+
+  --text-dark: #222831;
+  --text-light: #eeeeee;
+
+  --radius: 8px;
+  --space-1: .5rem;
+  --space-2: 1rem;
+  --space-3: 2rem;
+  --font-base: 'Segoe UI', sans-serif;
+}
+
+/* ------------- Reset básico --------------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-base);
+  background: var(--bg-light);
+  color: var(--text-dark);
+}
+
+/* ------------- Utilidades ----------------- */
+.container { width: 90%; max-width: 1200px; margin: 0 auto; }
+.flex     { display: flex; gap: var(--space-2); }
+.flex-col { flex-direction: column; }
+
+.btn {
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-primary   { background: var(--bg-accent); color: var(--text-light); }
+.btn-secondary { background: var(--bg-dark);   color: var(--text-light); }
+
+/* ------------- Pantalla full -------------- */
+.fullscreen { width: 100vw; height: 100vh; }
+
+/* ------------- Tótem táctil --------------- */
+.totem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+
+.totem-btn {
+  font-size: 1.4rem;
+  height: 120px;
+}

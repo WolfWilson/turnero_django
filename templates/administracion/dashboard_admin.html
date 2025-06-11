@@ -1,0 +1,19 @@
+{% extends "base_private.html" %}
+{% block title %}Dashboard - Administración{% endblock %}
+{% block content %}
+  <h2>Resumen general</h2>
+  <section class="flex">
+    <article class="btn btn-secondary flex-col">
+      <span>Pendientes</span>
+      <strong style="font-size:2rem;">{{ stats.pendientes }}</strong>
+    </article>
+    <article class="btn btn-secondary flex-col">
+      <span>En atención</span>
+      <strong style="font-size:2rem;">{{ stats.en_atencion }}</strong>
+    </article>
+    <article class="btn btn-secondary flex-col">
+      <span>Finalizados hoy</span>
+      <strong style="font-size:2rem;">{{ stats.finalizados }}</strong>
+    </article>
+  </section>
+{% endblock %}

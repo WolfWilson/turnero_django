@@ -1,0 +1,16 @@
+{% extends "base_public.html" %}
+{% block title %}Solicitar Turno{% endblock %}
+{% block content %}
+  <h1>Seleccione su trámite</h1>
+  <form method="post" class="flex-col" style="width:100%;max-width:600px;">
+    {% csrf_token %}
+    <input type="number" name="dni" placeholder="Ingrese DNI"
+           class="btn" style="font-size:2rem;text-align:center">
+    <div class="totem-grid">
+      {% for categoria in categorias %}
+        <button name="categoria" value="{{ categoria.id }}"
+                class="btn totem-btn btn-primary">{{ categoria.nombre }}</button>
+      {% endfor %}
+    </div>
+  </form>
+{% endblock %}

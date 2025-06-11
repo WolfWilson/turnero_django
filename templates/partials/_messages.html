@@ -1,0 +1,7 @@
+{% if messages %}
+  <ul class="flex-col" style="list-style:none;padding:0;">
+    {% for msg in messages %}
+      <li class="btn btn-primary">{{ msg }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}

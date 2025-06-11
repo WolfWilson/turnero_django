@@ -1,0 +1,16 @@
+<nav class="flex" style="background: var(--bg-dark); padding: var(--space-2);">
+  <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Dashboard</a>
+  <a href="{% url 'mesa_panel' %}" class="btn btn-secondary">Operador</a>
+  <div style="margin-left:auto;">
+    {{ request.user.username }}
+    <a href="{% url 'logout' %}" class="btn btn-primary">Salir</a>
+  </div>
+</nav>
+<nav class="flex" style="background: var(--bg-dark); padding: var(--space-2);">
+  <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Dashboard</a>
+  <a href="{% url 'mesa_panel' %}" class="btn btn-secondary">Operador</a>
+  <div style="margin-left:auto;">
+    {{ request.user.username }}
+    <a href="{% url 'logout' %}" class="btn btn-primary">Salir</a>
+  </div>
+</nav>
