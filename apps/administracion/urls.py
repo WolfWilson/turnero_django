@@ -1,8 +1,12 @@
 from django.urls import path
 from . import views
 
-app_name = "administracion"
+# apps/administracion/urls.py
+app_name = "administracion"  # <-- este es el namespace real
+
+from django.urls import path
+from . import views
 
 urlpatterns = [
-    path("", views.dashboard_admin, name="admin_dashboard"),
+    path("", views.dashboard_admin, name="home"),
 ]

@@ -1,0 +1,13 @@
+{% extends "base_public.html" %}
+{% block title %}Iniciar sesión{% endblock %}
+{% block content %}
+  <h1>Acceso</h1>
+  <form method="post">
+    {% csrf_token %}
+    <div class="flex-col">
+      {{ form.username.label_tag }}{{ form.username }}
+      {{ form.password.label_tag }}{{ form.password }}
+      <button class="btn btn-primary">Ingresar</button>
+    </div>
+  </form>
+{% endblock %}

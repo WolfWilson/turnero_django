@@ -20,6 +20,6 @@ def dashboard_admin(request):
     }
     return render(
         request,
-        "administracion/dashboard_admin.html",
+        "admin/dashboard_admin.html",
         {"stats": stats},
     )

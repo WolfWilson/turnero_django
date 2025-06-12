@@ -1,0 +1,11 @@
+{% extends "operador/base_operator.html" %}
+{% block title %}Panel de Operador{% endblock %}
+{% block content %}
+  <h2>Bienvenido, {{ request.user.first_name }}</h2>
+  <p>Esta pantalla mostrará tu próximo turno.</p>
+
+  <section class="flex-col">
+    <button class="btn btn-primary" style="width:200px;">Play / Llamar</button>
+    <button class="btn btn-secondary" style="width:200px;">Finalizar</button>
+  </section>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="container">
+  <h1 class="mt-4">Panel de Administración</h1>
+  <p class="lead">Bienvenido, {{ request.user.first_name }}.</p>
+
+  <div class="card mt-4">
+    <div class="card-body">
+      <h5 class="card-title">Opciones del sistema</h5>
+      <ul class="list-group">
+        <li class="list-group-item">
+          <a href="{% url 'turnos:monitor' %}">Ver monitor de turnos</a>
+        </li>
+        <li class="list-group-item">
+          <a href="{% url 'turnos:turnero_public' %}">Totem (turnero público)</a>
+        </li>
+        <li class="list-group-item">
+        <form method="post" action="{% url 'logout' %}">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-primary">Salir</button>
+</form>
+
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

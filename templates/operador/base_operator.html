@@ -1,0 +1,16 @@
+{% extends "base_private.html" %}
+{% block body %}
+  <nav class="flex" style="background:var(--bg-dark);padding:var(--space-2);">
+    <span>Mesa de atención</span>
+    <span style="margin-left:auto">{{ request.user.username }}</span>
+   <form method="post" action="{% url 'logout' %}">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-primary">Salir</button>
+</form>
+
+
+  </nav>
+  <main class="container" style="padding-top:var(--space-3);">
+    {% block content %}{% endblock %}
+  </main>
+{% endblock %}

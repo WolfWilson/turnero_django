@@ -1,0 +1,11 @@
+{% extends "base_private.html" %}
+{% block body %}
+  <nav class="flex" style="background: var(--bg-dark);padding:var(--space-2);">
+    <a href="{% url 'administracion:home' %}">
+    <a href="{% url 'turnos:monitor' %}"  target="_blank" class="btn btn-secondary">Monitor</a>
+    <a href="{% url 'turnos:turnero_public' %}" target="_blank" class="btn btn-secondary">Tótem</a>
+    <span style="margin-left:auto">{{ request.user.username }}</span>
+    <a href="{% url 'logout' %}" class="btn btn-primary">Salir</a>
+  </nav>
+  {% block content %}{% endblock %}
+{% endblock %}

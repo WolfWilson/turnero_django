@@ -1,8 +1,7 @@
 {% extends "base.html" %}
 {% block body %}
-  {% include "_partials/_navbar_private.html" %}
   <main class="container" style="padding-top: var(--space-3);">
-    {% include "_partials/_messages.html" %}
+    {% include "partials/_messages.html" %}
     {% block content %}{% endblock %}
   </main>
 {% endblock %}
