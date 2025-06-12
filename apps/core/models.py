@@ -3,178 +3,189 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-
-# ----------------------------------------------------------------------
-# 1. Entidades de configuración
-# ----------------------------------------------------------------------
-class Categoria(models.Model):
-    """Tipo de trámite que el público elige (Certificaciones, Reclamos…)."""
+# ---------------------------------------------------------------------
+# 0. Área / Oficina
+# ---------------------------------------------------------------------
+class Area(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
+    slug   = models.SlugField(unique=True)
 
     class Meta:
-        verbose_name = "categoría"
-        verbose_name_plural = "categorías"
         ordering = ["nombre"]
+        verbose_name = "área"
+        verbose_name_plural = "áreas"
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.nombre
 
 
-class Mesa(models.Model):
-    """Puesto físico de atención."""
-    nombre = models.CharField(
-        max_length=20,
-        unique=True,
-        help_text="Identificador visible (Mesa 1, Mesa 2, etc.)",
+# ---------------------------------------------------------------------
+# 0.1  Administradores de área (rol granular)
+# ---------------------------------------------------------------------
+class AreaAdministrador(models.Model):
+    """Vincula un usuario con privilegios de administración a un área."""
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,               # al borrar el usuario, cae la vinculación
+        related_name="areas_administradas",
     )
+    area = models.ForeignKey(
+        Area,
+        on_delete=models.CASCADE,               # si el área se elimina, se limpian vínculos
+        related_name="administradores",
+    )
+
+    class Meta:
+        unique_together = ("usuario", "area")
+        verbose_name = "administrador de área"
+        verbose_name_plural = "administradores de área"
+
+    def __str__(self):
+        return f"{self.usuario} ↔ {self.area}"
+
+
+# ---------------------------------------------------------------------
+# 1. Categorías y Mesas
+# ---------------------------------------------------------------------
+class Categoria(models.Model):
+    area   = models.ForeignKey(
+        Area,
+        on_delete=models.PROTECT,               # impedir borrar un área con categorías
+        related_name="categorias",
+    )
+    nombre = models.CharField(max_length=100)
+
+    class Meta:
+        ordering = ["nombre"]
+        unique_together = ("area", "nombre")
+        verbose_name = "categoría"
+
+    def __str__(self):
+        return f"{self.nombre} ({self.area})"
+
+
+class Mesa(models.Model):
+    area = models.ForeignKey(
+        Area,
+        on_delete=models.PROTECT,               # no borrar área con mesas activas
+        related_name="mesas",
+    )
+    nombre = models.CharField(max_length=20)
     activa = models.BooleanField(default=True)
     categorias = models.ManyToManyField(
         Categoria,
         blank=True,
-        help_text="Si la lista está vacía, la mesa acepta cualquier categoría.",
+        related_name="mesas",
+        help_text="Si está vacío, la mesa atiende cualquier categoría.",
     )
 
     class Meta:
-        ordering = ["nombre"]
+        ordering = ["area", "nombre"]
+        unique_together = ("area", "nombre")
+        verbose_name = "mesa"
 
-    def __str__(self) -> str:
-        return self.nombre
+    def __str__(self):
+        return f"{self.area} · {self.nombre}"
 
 
-# ----------------------------------------------------------------------
-# 2. Datos de la persona (solo para Modo 2)
-# ----------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# 2. Persona (modo DNI)
+# ---------------------------------------------------------------------
 class Persona(models.Model):
-    """Ciudadano que se identifica con DNI."""
-    dni = models.PositiveBigIntegerField(unique=True)
-    nombre = models.CharField(max_length=120)
+    dni      = models.PositiveBigIntegerField(unique=True)
+    nombre   = models.CharField(max_length=120)
     apellido = models.CharField(max_length=120)
 
     class Meta:
-        verbose_name = "persona"
-        verbose_name_plural = "personas"
         ordering = ["apellido", "nombre"]
+        verbose_name = "persona"
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f"{self.apellido}, {self.nombre} ({self.dni})"
 
     @property
-    def nombre_completo(self) -> str:
+    def nombre_completo(self):
         return f"{self.nombre} {self.apellido}"
 
 
-# ----------------------------------------------------------------------
-# 3. Turno (compatible con ambos modos)
-# ----------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# 3. Turno
+# ---------------------------------------------------------------------
 class Turno(models.Model):
-    """Turno emitido desde la pantalla pública."""
-
     class Modo(models.TextChoices):
         NUMERACION = "ticket", "Ticket numerado"
-        DNI = "dni", "Identificación por DNI"
+        DNI        = "dni",    "Identificación por DNI"
 
     class Estado(models.TextChoices):
-        PENDIENTE = "pend", "Pendiente"
+        PENDIENTE   = "pend", "Pendiente"
         EN_ATENCION = "prog", "En atención"
-        FINALIZADO = "done", "Finalizado"
+        FINALIZADO  = "done", "Finalizado"
 
-    # --- Campos generales ------------------------------------------------
-    modo = models.CharField(
-        max_length=6,
-        choices=Modo.choices,
-        default=Modo.NUMERACION,
-        help_text="Define si el turno usa numeración o DNI.",
-    )
-    categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
+    area      = models.ForeignKey(Area, on_delete=models.PROTECT, related_name="turnos")
+    modo      = models.CharField(max_length=6, choices=Modo.choices, default=Modo.DNI)
+    categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT)
     mesa_asignada = models.ForeignKey(
         Mesa,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        help_text="Se completará al asignar la mesa.",
+        on_delete=models.SET_NULL,    # si se desactiva una mesa, mantenemos el histórico
+        null=True, blank=True,
     )
-    estado = models.CharField(
-        max_length=4,
-        choices=Estado.choices,
-        default=Estado.PENDIENTE,
-    )
-    fecha = models.DateField(auto_now_add=True, editable=False)
+    estado    = models.CharField(max_length=4, choices=Estado.choices, default=Estado.PENDIENTE)
+    fecha     = models.DateField(auto_now_add=True)
     creado_en = models.DateTimeField(auto_now_add=True)
 
-    # --- Campos para Modo 1 (ticket) ------------------------------------
-    numero = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Número secuencial (solo para modo Ticket).",
-    )
+    # modo Ticket
+    numero = models.PositiveIntegerField(null=True, blank=True)
 
-    # --- Campos para Modo 2 (DNI) ---------------------------------------
-    persona = models.ForeignKey(
-        Persona,
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        help_text="Persona identificada (solo para modo DNI).",
-    )
+    # modo DNI
+    persona = models.ForeignKey(Persona, on_delete=models.PROTECT, null=True, blank=True)
 
     class Meta:
         ordering = ["-creado_en"]
         constraints = [
-            # Un número único por día (modo Ticket)
+            # número único por área y fecha para modo ticket
             models.UniqueConstraint(
-                fields=["numero", "fecha"],
+                fields=["area", "numero", "fecha"],
                 condition=models.Q(modo="ticket"),
-                name="uniq_numero_por_fecha",
+                name="uniq_numero_area_fecha",
             ),
-            # Un turno activo por persona (modo DNI)
+            # solo un turno activo por persona y área
             models.UniqueConstraint(
-                fields=["persona"],
-                condition=models.Q(
-                    modo="dni",
-                    estado__in=["pend", "prog"],
-                ),
-                name="uniq_turno_activo_por_persona",
+                fields=["area", "persona"],
+                condition=models.Q(modo="dni", estado__in=["pend", "prog"]),
+                name="uniq_turno_activo_persona_area",
             ),
         ]
 
-    # ------------------ Métodos útiles ----------------------------------
-    def __str__(self) -> str:
+    def __str__(self):
         if self.modo == self.Modo.NUMERACION:
-            return f"T-{self.numero:04d} ({self.categoria.nombre})"
-        return f"{self.persona} – {self.categoria.nombre}"
+            return f"{self.area} · T-{self.numero:04d} ({self.categoria})"
+        return f"{self.area} · {self.persona} – {self.categoria}"
 
     @property
+# --- en Turno.display -----------------------------------
     def display(self) -> str:
-        """Texto breve para pantallas públicas."""
         if self.modo == self.Modo.NUMERACION:
-            return (
-                f"N° {self.numero} • {self.categoria.nombre} "
-                f"• Mesa {self.mesa_asignada}"
-            )
-        nombre = self.persona.nombre_completo if self.persona else ""
-        return (
-            f"{nombre} • {self.categoria.nombre} "
-            f"• Mesa {self.mesa_asignada}"
-        )
+            return f"N° {self.numero} • {self.categoria} • Mesa {self.mesa_asignada}"
+        nombre = self.persona.nombre_completo if self.persona else ""  # ← seguro
+        return f"{nombre} • {self.categoria} • Mesa {self.mesa_asignada}"
 
 
-# ----------------------------------------------------------------------
-# 4. Registro de la atención
-# ----------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# 4. Atención
+# ---------------------------------------------------------------------
 class Atencion(models.Model):
-    """Se crea cuando el operador hace “play” e inicia la atención."""
     turno = models.OneToOneField(Turno, on_delete=models.CASCADE)
     operador = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
         limit_choices_to={"groups__name": "Operador"},
     )
-    motivo_real = models.TextField(verbose_name="detalle / motivo final")
-    iniciado_en = models.DateTimeField(auto_now_add=True)
+    motivo_real   = models.TextField()
+    iniciado_en   = models.DateTimeField(auto_now_add=True)
     finalizado_en = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-iniciado_en"]
 
-    def __str__(self) -> str:
-        return f"Atención #{self.turno.pk} por {self.operador}"
+    def __str__(self):
+        return f"{self.turno.area} · Atención #{self.turno.pk} por {self.operador}"

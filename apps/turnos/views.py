@@ -36,3 +36,14 @@ def monitor(request):
     hoy = timezone.localdate()
     lista = Turno.objects.filter(fecha=hoy).order_by("creado_en")
     return render(request, "turnos/monitor.html", {"turnos": lista})
+
+# ---------- CATEGORÍAS EN FORMATO JSON ----------
+from django.http import JsonResponse
+from apps.core.models import Categoria
+
+def categorias_json(request):
+    data = [
+        {"id": c.id, "nombre": c.nombre} # type: ignore[attr-defined]
+        for c in Categoria.objects.all().order_by("nombre")[:8]
+    ]
+    return JsonResponse(data, safe=False)
