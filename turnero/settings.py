@@ -31,8 +31,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Apps propias
-    'apps.core',            # ← Asegúrate de que esté
+    # Propias  ← usa siempre el prefijo apps.
+    'apps.core',
     'apps.turnos',
     'apps.atencion',
     'apps.administracion',
@@ -51,13 +51,17 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'turnero.urls'
 
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [ BASE_DIR / 'templates' ],   # ← añade esta línea
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -65,6 +69,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'turnero.wsgi.application'
 

@@ -8,7 +8,8 @@ urlpatterns = [
 
     # Público
     path("",       include("apps.turnos.urls")),          # /  → tótem   (turnero_public)
-    path("monitor/", include("apps.turnos.urls_monitor")),# /monitor/…
+
+
 
     # Zonas privadas
     path("mesa/",      include("apps.atencion.urls")),    # panel operador

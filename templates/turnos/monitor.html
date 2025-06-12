@@ -1,0 +1,13 @@
+<!-- templates/turnos/monitor.html -->
+{% extends "base_public.html" %}
+{% block title %}Monitor{% endblock %}
+{% block content %}
+  <h1>Monitor de Turnos (demo)</h1>
+  <ul>
+    {% for t in turnos %}
+      <li>{{ t.display }}</li>
+    {% empty %}
+      <li>No hay turnos hoy</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
