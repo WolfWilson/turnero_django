@@ -1,0 +1,149 @@
+/* ───────────────────  VARIABLES  ─────────────────── */
+:root{
+    --azul-fondo:#022436;
+    --amarillo:#f4c542;  /* fondo para botón volver */
+    --azul-btn:#2f87b1;        /* azul desaturado */
+    --naranja:#ff8c32;
+    --verde:#28a745;
+    --verde-banner:#55c35d;
+    --rojo:#c94444;            /* rojo desaturado */
+    --gris-btn:#e0e0e0;
+    --size-btn:130px;
+    --gap-btn:14px;
+    --br:14px;
+  }
+  
+  /* ───────────────────  GLOBAL  ─────────────────── */
+  body{
+    background:var(--azul-fondo);
+    color:#fff;
+    text-align:center;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .pantalla{display:none}
+  .pantalla.activa{display:block}
+  
+  /* centrado vertical en pantalla 1 */
+  #pantalla-dni .vcenter-inner{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+  }
+
+  /* debajo de la sección “GLOBAL” o donde prefieras  */
+#pantalla-dni h2{
+    font-size:clamp(2.2rem, 5vw, 3.6rem);  /* ⇦ ajusta estos valores a tu gusto */
+    line-height:1.25;                      /* opcional: controla la separación vertical */
+  }
+  
+  
+  /* ─── TECLADO ─── */
+  #teclado .d-grid{
+    gap:var(--gap-btn);
+    grid-template-columns:repeat(3,var(--size-btn));
+  }
+  .key{
+    width:var(--size-btn);height:var(--size-btn);
+    border-radius:var(--br);
+    font-size:2.8rem;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 6px rgba(0,0,0,.25);
+    border:0;user-select:none;
+    transition:transform .07s ease;
+  }
+  .key:active{transform:scale(.94);}
+  .key.num  {background:var(--azul-btn);}
+  .key.func {background:var(--rojo);}
+  .key.back {background:var(--naranja);}
+  .key span.material-symbols-rounded{font-size:2.9rem;font-weight:700;line-height:1;}
+  
+  /* ─── INPUT DNI ─── */
+  #dni-input{
+    max-width:420px;height:90px;
+    font-size:2.6rem;font-weight:700;letter-spacing:.06em;
+    border-radius:var(--br);
+    box-shadow:0 3px 6px rgba(0,0,0,.3) inset;
+  }
+  
+  /* ─── BOTÓN CONFIRMAR ─── */
+  #dni-ok{background:var(--verde);border-radius:var(--br);font-weight:600;}
+  
+  /* ─── CATEGORÍAS ─── */
+  .categoria-btn{
+    min-width:320px;height:90px;margin:1rem auto;
+    font-size:1.8rem;font-weight:700;
+    background:var(--gris-btn);color:#333;border:0;
+    border-radius:var(--br);box-shadow:0 3px 6px rgba(0,0,0,.2);
+    transition:transform .05s ease;
+  }
+  .categoria-btn:active{transform:scale(.96);}
+
+  #cat-back {
+    background: var(--amarillo);
+    color: #000;             /* texto oscuro sobre amarillo */
+    font-size: 1.8rem;
+    font-weight: 700;
+    padding: 1rem 2.5rem;
+    border: none;
+    border-radius: var(--br);
+    box-shadow: 0 3px 6px rgba(0,0,0,.25);
+    transition: transform .05s ease;
+  }
+  #cat-back:active {
+    transform: scale(0.96);
+  }
+  
+  
+  
+  /* ─── PANTALLA OK ─── */
+  #ok-nombre{
+    font-size:clamp(2.4rem,6vw,4.8rem);
+    font-weight:800;letter-spacing:.02em;margin-bottom:2rem;
+  }
+  .banner-ok{
+    background:var(--verde-banner);
+    border-radius:var(--br);
+    max-width:760px;margin:0 auto 2.5rem;
+    padding:1.2rem 1rem .9rem;
+    box-shadow:0 3px 6px rgba(0,0,0,.25);
+    line-height:1.2;color:#fff;
+  }
+  .banner-ok .txt-superior{
+    font-size:clamp(1.3rem,3vw,2.1rem);
+    font-weight:500;opacity:.9;
+  }
+  .banner-ok #ok-cat{
+    display:block;
+    margin-top:.1rem;
+    font-size:clamp(1.7rem,3.5vw,2.8rem);
+    font-weight:800;
+  }
+  #ok-espera{font-size:clamp(1.4rem,3vw,2.1rem);margin:2.5rem 0 3.5rem;}
+  .countdown-text{font-size:1.2rem;opacity:.8;margin-top:-1rem;}
+  .btn-wide{
+    width:270px;height:85px;
+    border-radius:var(--br);font-size:1.4rem;font-weight:600;
+  }
+  #otro-btn{background:var(--azul-btn);border:0;}
+  #salir-btn{background:var(--rojo);border:0;}
+  #otro-btn:hover,#otro-btn:active,
+  #salir-btn:hover,#salir-btn:active{filter:brightness(.90);}
+  #mensaje-final{
+    font-size:clamp(1.6rem,3.5vw,2.6rem);
+    font-weight:700;letter-spacing:.02em;margin-top:4rem;
+  }
+  
+  /* ─── ANIMACIÓN SUAVE ─── */
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .fade-in{animation:fadeIn .25s ease-out backwards;}
+  
+  /* ─── ACCESIBILIDAD ─── */
+  .btn-wide:focus-visible{outline:3px solid #fff;outline-offset:3px;}
+  .visually-hidden{
+    position:absolute!important;width:1px;height:1px;margin:-1px;border:0;padding:0;
+    clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;
+  }
+  
