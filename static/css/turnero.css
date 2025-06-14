@@ -70,6 +70,29 @@
   
   /* ─── BOTÓN CONFIRMAR ─── */
   #dni-ok{background:var(--verde);border-radius:var(--br);font-weight:600;}
+
+  /* Alert visual refinado */
+  #dni-alert {
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    background-color: #fff3cd;
+    color: #856404;
+    border-left: 5px solid #f1c40f;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    max-width: 500px;
+    margin: 0 auto 1rem auto;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  #dni-alert .material-symbols-rounded {
+    font-size: 1.5rem;
+  }
+  
   
   /* ─── CATEGORÍAS ─── */
   .categoria-btn{

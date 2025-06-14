@@ -9,6 +9,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Google Material Symbols -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:wght@400;700" rel="stylesheet">
+  <!-- Iconos de Material Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
 
   <!-- CSS separado -->
   <link rel="stylesheet" href="{% static 'css/turnero.css' %}">
@@ -22,10 +24,19 @@
 <section id="pantalla-dni" class="pantalla activa container py-5">
   <div class="vcenter-inner">
 
-    <h2 class="mb-5">
+    <h2 class="mb-4">
       Para gestionar su turno<br>
       Ingrese el DNI del titular del trámite o consulta
     </h2>
+
+    <!-- ⛔ contenedor de mensajes -->
+    <div id="dni-alert" class="d-none">
+      <span class="material-icons-outlined align-middle me-2">error_outline</span>
+      DNI no encontrado
+    </div>
+    
+    
+    
 
     <!-- Teclado -->
     <div id="teclado" class="d-flex flex-column align-items-center">
@@ -33,13 +44,9 @@
         {% for n in "123456789" %}
           <button class="btn key num" data-num="{{ n }}">{{ n }}</button>
         {% endfor %}
-        <button class="btn key func" id="clear">
-          <span class="material-symbols-rounded">close</span>
-        </button>
+        <button class="btn key func" id="clear"><span class="material-symbols-rounded">close</span></button>
         <button class="btn key num" data-num="0">0</button>
-        <button class="btn key back" id="back">
-          <span class="material-symbols-rounded">backspace</span>
-        </button>
+        <button class="btn key back" id="back"><span class="material-symbols-rounded">backspace</span></button>
       </div>
     </div>
 
@@ -48,10 +55,7 @@
       <input id="dni-input" class="form-control text-center" readonly>
     </div>
 
-    <button id="dni-ok" class="btn btn-success fs-4 px-5 py-2" disabled>
-      Confirmar
-    </button>
-
+    <button id="dni-ok" class="btn btn-success fs-4 px-5 py-2" disabled>Confirmar</button>
   </div>
 </section>
 
