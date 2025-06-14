@@ -26,6 +26,9 @@ urlpatterns = [
     # zonas privadas
     path("mesa/",      include("apps.atencion.urls")),
     path("dashboard/", include("apps.administracion.urls")),
+
+    path("api/", include("api.urls")),
+
 ]
 
 if settings.DEBUG:

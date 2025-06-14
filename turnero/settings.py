@@ -36,6 +36,9 @@ INSTALLED_APPS = [
     'apps.turnos',
     'apps.atencion',
     'apps.administracion',
+
+    "rest_framework",
+    "api",
 ]
 
 
