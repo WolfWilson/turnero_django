@@ -25,7 +25,7 @@
   <!-- Contenido principal -->
   <section class="container d-flex align-items-center justify-content-center min-vh-100">
     <div class="card glass-card p-4 p-md-5 shadow-lg" style="max-width: 420px; width: 100%;">
-      <h2 class="text-center mb-4 fw-light">Inicio de sesión nº 10</h2>
+      <h2 class="text-center mb-4 fw-light">Inicio de sesión</h2>
 
       <!-- Errores generales -->
       {% if form.non_field_errors %}
@@ -61,14 +61,16 @@
           <div class="text-danger small mb-2">{{ form.password.errors.0 }}</div>
         {% endif %}
 
-        <!-- Recordarme + Olvidaste -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="" id="rememberMe" checked>
-            <label class="form-check-label small" for="rememberMe">Recuérdame</label>
-          </div>
+<!-- Recordarme -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" value="" id="rememberMe" checked>
+    <label class="form-check-label small" for="rememberMe">Recuérdame</label>
+  </div>
+</div>        
+          <!-- </div>
           <a href="#" class="small link-light">¿Olvidaste tu contraseña?</a>
-        </div>
+        </div> -->
 
         <button class="btn btn-primary w-100 py-2" type="submit">Iniciar sesión</button>
       </form>
@@ -80,8 +82,11 @@
       
         <!-- Pinear fondo -->
         <button id="btn-pin-bg" type="button" class="btn btn-sm btn-outline-light rounded-circle">
-          <span id="pin-icon" class="material-symbols-outlined">push_pin</span>
+          <span id="pin-icon" class="material-symbols-outlined transition-icon">push_pin</span>
+
+
         </button>
+        
       </div>
       
     </div>
@@ -89,6 +94,8 @@
 
   <!-- Script para seleccionar fondo aleatorio -->
   <script src="{% static 'js/login.js' %}"></script>
+  <!-- Bootstrap JS -->
+
 
 </body>
 </html>

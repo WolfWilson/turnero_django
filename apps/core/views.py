@@ -9,3 +9,5 @@ def postlogin(request):
     if request.user.groups.filter(name="Operador").exists():
         return redirect("atencion:panel_mesa")   # panel operador
     return redirect("logout")    # sin grupo válido → fuerza logout
+
+

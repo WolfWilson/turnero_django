@@ -1,67 +1,82 @@
-// Lista de rutas de imágenes disponibles (ajustá según tengas más)
-const bgImages = [
-    "/static/media/login/bg.jpg",
-    "/static/media/login/bg1.jpg",
-    "/static/media/login/bg2.jpg",
-    "/static/media/login/bg3.jpg"
-  ];
+/**
+ * Fondos disponibles (bg.jpg + bg1…bg9.jpg)
+ * Añade aquí más rutas si lo necesitas.
+ */
+const bgImages = Array.from({ length: 10 }, (_, i) =>
+    i === 0
+      ? "/static/media/login/bg.jpg"
+      : `/static/media/login/bg${i}.jpg`
+  );
   
-  // Elementos
-  const loginBg = document.getElementById("login-bg");
+  /* === Elementos clave === */
+  const loginBg   = document.getElementById("login-bg");
+  const loginBody = document.getElementById("login-body");
   const btnShuffle = document.getElementById("btn-random-bg");
-  const btnPin = document.getElementById("btn-pin-bg");
-  const pinIcon = document.getElementById("pin-icon");
+  const btnPin     = document.getElementById("btn-pin-bg");
+  const pinIcon    = document.getElementById("pin-icon");
   
-  // Devuelve la imagen a cargar al iniciar (favorito o aleatorio)
-  function getInitialBackground() {
-    const pinned = localStorage.getItem("pinnedBg");
+  /* === Utilidades === */
+  const LS_KEY = "pinnedBg";
+  
+  /* Pre-carga para evitar flashes */
+  bgImages.forEach(src => new Image().src = src);
+  
+  /**
+   * Devuelve un fondo inicial (favorito o aleatorio).
+   */
+  function pickInitialBackground() {
+    const pinned = localStorage.getItem(LS_KEY);
     return pinned && bgImages.includes(pinned)
       ? pinned
       : bgImages[Math.floor(Math.random() * bgImages.length)];
   }
   
-  // Aplica el fondo y actualiza el estado visual
-  function setBackground(imgPath) {
-    loginBg.style.backgroundImage = `url('${imgPath}')`;
-    loginBg.setAttribute("data-current", imgPath);
+  /**
+   * Aplica visualmente un fondo y refleja estado pin.
+   */
+  function applyBackground(src) {
+    loginBg.style.backgroundImage = `url('${src}')`;
+    loginBg.dataset.current = src;
   
-    const pinned = localStorage.getItem("pinnedBg");
-  
-    if (pinned === imgPath) {
-      pinIcon.textContent = "push_pin";
-      pinIcon.style.color = "limegreen"; // Fondo fijado → verde
-    } else {
-      pinIcon.textContent = "push_pin";
-      pinIcon.style.color = ""; // Reset color
-    }
+    const isPinned = localStorage.getItem(LS_KEY) === src;
+    pinIcon.textContent = isPinned ? "pin_end" : "push_pin";
+    pinIcon.style.color = isPinned ? "limegreen" : ""; // fuerza color
+    loginBody.classList.toggle("bg-pinned", isPinned); // mantiene la rotación
   }
   
-  // Cambia el fondo por uno nuevo al azar
-  btnShuffle.addEventListener("click", () => {
-    const current = loginBg.getAttribute("data-current");
-    let random = current;
-  
-    while (random === current && bgImages.length > 1) {
-      random = bgImages[Math.floor(Math.random() * bgImages.length)];
+  /**
+   * Elige un fondo distinto aleatorio y lo aplica.
+   */
+  function shuffleBackground() {
+    const current = loginBg.dataset.current;
+    let candidate = current;
+    while (candidate === current && bgImages.length > 1) {
+      candidate = bgImages[Math.floor(Math.random() * bgImages.length)];
     }
+    applyBackground(candidate);
+  }
   
-    setBackground(random);
-  });
+  /**
+   * Alterna el fondo actual como pineado.
+   */
+  function togglePin() {
+    const current = loginBg.dataset.current;
+    const alreadyPinned = localStorage.getItem(LS_KEY) === current;
   
-  // Alterna el fondo fijado
-  btnPin.addEventListener("click", () => {
-    const current = loginBg.getAttribute("data-current");
-    const pinned = localStorage.getItem("pinnedBg");
-  
-    if (pinned === current) {
-      localStorage.removeItem("pinnedBg");
+    if (alreadyPinned) {
+      localStorage.removeItem(LS_KEY);
     } else {
-      localStorage.setItem("pinnedBg", current);
+      localStorage.setItem(LS_KEY, current);
     }
+    applyBackground(current);
+  }
   
-    setBackground(current);
+  /* === Event listeners === */
+  btnShuffle?.addEventListener("click", shuffleBackground);
+  btnPin?.addEventListener("click", togglePin);
+  
+  /* === Inicialización === */
+  document.addEventListener("DOMContentLoaded", () => {
+    applyBackground(pickInitialBackground());
   });
-  
-  // Inicialización
-  setBackground(getInitialBackground());
   
