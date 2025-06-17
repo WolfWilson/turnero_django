@@ -50,16 +50,20 @@
           <div class="text-danger small mb-2">{{ form.username.errors.0 }}</div>
         {% endif %}
 
-        <!-- Campo contraseña -->
-        <div class="mb-3 input-group">
-          <span class="input-group-text bg-transparent border-end-0">
-            <span class="material-symbols-outlined">lock</span>
-          </span>
-          {% render_field form.password class="form-control bg-transparent border-start-0" placeholder="Contraseña" %}
-        </div>
-        {% if form.password.errors %}
-          <div class="text-danger small mb-2">{{ form.password.errors.0 }}</div>
-        {% endif %}
+            <!-- Campo contraseña con ícono para mostrar/ocultar -->
+      <div class="mb-3 input-group">
+      <span class="input-group-text bg-transparent border-end-0">
+        <span class="material-symbols-outlined">lock</span>
+      </span>
+      {% render_field form.password class="form-control bg-transparent border-start-0 border-end-0" placeholder="Contraseña" id="password-field" %}
+      <button type="button" class="input-group-text bg-transparent border-start-0" id="toggle-password" tabindex="-1">
+        <span class="material-symbols-outlined" id="eye-icon">visibility</span>
+      </button>
+      </div>
+      {% if form.password.errors %}
+      <div class="text-danger small mb-2">{{ form.password.errors.0 }}</div>
+      {% endif %}
+
 
 <!-- Recordarme -->
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -72,7 +76,7 @@
           <a href="#" class="small link-light">¿Olvidaste tu contraseña?</a>
         </div> -->
 
-        <button class="btn btn-primary w-100 py-2" type="submit">Iniciar sesión</button>
+        <button class="btn btn-primary w-100 py-2" type="submit">Ingresar</button>
       </form>
       <div class="d-flex justify-content-center gap-3 mt-3">
         <!-- Cambiar fondo -->
@@ -94,8 +98,6 @@
 
   <!-- Script para seleccionar fondo aleatorio -->
   <script src="{% static 'js/login.js' %}"></script>
-  <!-- Bootstrap JS -->
-
-
+  <script src="{% static 'js/utilities/password_toggle.js' %}"></script> 
 </body>
 </html>

@@ -14,6 +14,14 @@
   }
   
   /* ───────────────────  GLOBAL  ─────────────────── */
+
+  html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
   body{
     background:var(--azul-fondo);
     color:#fff;
@@ -24,6 +32,19 @@
   .pantalla{display:none}
   .pantalla.activa{display:block}
   
+  .pantalla {
+  display: none;
+  height: 100%;
+  overflow: hidden;   /* ← evita barras internas */
+}
+
+.pantalla.activa {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
   /* centrado vertical en pantalla 1 */
   #pantalla-dni .vcenter-inner{
     min-height:100vh;
@@ -35,7 +56,7 @@
 
   /* debajo de la sección “GLOBAL” o donde prefieras  */
 #pantalla-dni h2{
-    font-size:clamp(2.2rem, 5vw, 3.6rem);  /* ⇦ ajusta estos valores a tu gusto */
+    font-size:clamp(2.1rem, 5vw, 3.6rem);  /* ⇦ ajusta estos valores a tu gusto */
     line-height:1.25;                      /* opcional: controla la separación vertical */
   }
   
@@ -54,6 +75,11 @@
     border:0;user-select:none;
     transition:transform .07s ease;
   }
+  .key {
+  width: clamp(90px, 8vw, 130px);
+  height: clamp(90px, 8vw, 130px);
+}
+
   .key:active{transform:scale(.94);}
   .key.num  {background:var(--azul-btn);}
   .key.func {background:var(--rojo);}
@@ -119,8 +145,6 @@
     transform: scale(0.96);
   }
   
-  
-  
   /* ─── PANTALLA OK ─── */
   #ok-nombre{
     font-size:clamp(2.4rem,6vw,4.8rem);
@@ -170,3 +194,18 @@
     clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;
   }
   
+
+  #debug-resolution {
+  position: fixed;
+  bottom: 8px;
+  right: 12px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 0.9rem;
+  font-family: monospace;
+  padding: 6px 10px;
+  border-radius: 6px;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.8;
+}

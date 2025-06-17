@@ -78,5 +78,9 @@ const bgImages = Array.from({ length: 10 }, (_, i) =>
   /* === Inicialización === */
   document.addEventListener("DOMContentLoaded", () => {
     applyBackground(pickInitialBackground());
+
+    
   });
+  
+
   

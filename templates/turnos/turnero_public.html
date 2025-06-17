@@ -110,5 +110,19 @@
   /* CSRF global, por si haces fetch POST */
   const csrftoken = "{{ csrf_token }}";
 </script>
+
+<!-- ───────────── FUNCION PARA TESTEAR LA VISTA EN DISTINTAS RESOLUCIONES · BORRAR DESPUES ───────────── -->
+<div id="debug-resolution"></div>
+<script>
+  const debugEl = document.getElementById("debug-resolution");
+
+  function updateResolution() {
+    debugEl.textContent = `Resolución: ${window.innerWidth} × ${window.innerHeight}`;
+  }
+
+  window.addEventListener("resize", updateResolution);
+  updateResolution();
+</script>
+
 </body>
 </html>
