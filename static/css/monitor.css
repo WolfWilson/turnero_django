@@ -1,0 +1,137 @@
+/* reset mínimo */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;font-family:'Roboto',sans-serif;background:#022436;color:#fff}
+
+/* Grid principal: dos columnas fijas */
+.monitor-grid{
+  display:grid;
+  grid-template-columns: 42% 58%;
+  height:100%;
+}
+
+/* ────────────── Columna turnos ────────────── */
+.turn-list{
+  padding:2vh 2vw;
+  display:flex;
+  flex-direction:column;
+  gap:1.2vh;
+}
+
+.turn-header{
+  display:grid;
+  grid-template-columns: 60px 1fr 110px 90px;
+  align-items:center;
+  font-weight:700;
+  font-size:2.2vh;
+  letter-spacing:1px;
+  text-shadow:0 0 8px #fff;
+}
+
+#clock{justify-self:center}
+
+#turn-container{
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:1.2vh;
+}
+
+/* Tarjetas */
+.turn-card{
+  display:grid;
+  grid-template-columns:60px 1fr 90px;
+  align-items:center;
+  padding:1.4vh 1vw;
+  border-radius:8px;
+  background:#d9d9d9;
+  color:#223;
+  font-size:2.4vh;
+  font-weight:500;
+}
+.turn-card .bell{font-size:4vh;color:#223}
+.turn-card.active{
+  background:#3ec0ff;
+  color:#fff;
+}
+.turn-card.active .bell{color:#fff}
+
+/* Item vacío */
+.turn-empty{
+  font-size:2.2vh;
+  opacity:.7;
+}
+
+/* ────────────── Columna media ────────────── */
+.media-pane{
+  position:relative;
+  overflow:hidden;
+}
+.media-placeholder,
+.media-pane video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+
+/* …(todo lo previo permanece igual)… */
+
+/* ───────── Overlay llamada ───────── */
+#alert-overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(2,36,54,0.96);
+  z-index:900;
+  opacity:0;
+  visibility:hidden;
+  transition:opacity .5s ease;
+}
+
+#alert-overlay.show{
+  opacity:1;
+  visibility:visible;
+}
+
+#alert-wrapper{
+  display:flex;
+  flex-wrap:wrap;
+  gap:2vw;
+}
+
+.alert-card{
+  display:flex;
+  align-items:center;
+  gap:1vw;
+  background:#3ec0ff;
+  padding:2.2vh 3.4vw;
+  border-radius:14px;
+  font-size:3.2vh;
+  font-weight:500;
+  color:#fff;
+  box-shadow:0 0 18px rgba(0,0,0,.45);
+}
+.alert-card .bell{font-size:5.4vh}
+
+
+/* Botón de prueba — quitar en producción */
+/* Botón de prueba — quitar en producción */
+.demo-btn{
+  position:fixed;
+  bottom:2vh;
+  right:2vw;
+  z-index:950;
+  background:#ff8c32;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  padding:1.2vh 2vw;
+  font-size:2vh;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 0 12px rgba(0,0,0,.35);
+  transition:opacity .3s;
+}
+.demo-btn:hover{opacity:.85}

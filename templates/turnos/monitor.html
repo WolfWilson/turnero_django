@@ -1,13 +1,59 @@
-<!-- templates/turnos/monitor.html -->
+{# templates/turnos/monitor.html #}
 {% extends "base_public.html" %}
-{% block title %}Monitor{% endblock %}
+{% load static %}
+{% block title %}Monitor de turnos{% endblock %}
+
+{% block extra_head %}
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/monitor.css' %}">
+{% endblock %}
+
 {% block content %}
-  <h1>Monitor de Turnos (demo)</h1>
-  <ul>
-    {% for t in turnos %}
-      <li>{{ t.display }}</li>
-    {% empty %}
-      <li>No hay turnos hoy</li>
-    {% endfor %}
-  </ul>
+<div class="monitor-grid">
+  <!-- Lista principal -->
+  <section class="turn-list" aria-label="Turnos en pantalla">
+    <header class="turn-header">
+      <span class="col-bell"></span>
+      <span class="col-turno">TURNO</span>
+      <time id="clock" aria-label="Hora actual"></time>
+      <span class="col-box">BOX</span>
+    </header>
+
+    <ul id="turn-container">
+      {% for t in turnos|slice:":8" %}
+        <li class="turn-card {% if t.is_active %}active{% endif %}">
+          <span class="material-icons-outlined bell">notifications</span>
+          <span class="turno">{{ t.display }}</span>
+          <span class="box">{{ t.box }}</span>
+        </li>
+      {% empty %}
+        <li class="turn-empty">No hay turnos pendientes</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <!-- Pane de video/imágen -->
+  <!-- <section class="media-pane" aria-label="Contenido institucional">
+    <img src="{% static 'media/placeholder.jpg' %}" alt="Video institucional" class="media-placeholder">
+  </section>
+</div> -->
+
+<section class="media-pane" aria-label="Contenido institucional">
+    <video src="{% static 'media/placeholder_video.mp4' %}" loop autoplay muted playsinline class="media-placeholder">
+      Tu navegador no soporta la reproducción de video.
+    </video>
+  </section>
+
+<!-- ████████ Overlay de aviso ████████ -->
+<div id="alert-overlay" aria-live="assertive" hidden>
+  <div id="alert-wrapper"></div>
+</div>
+
+<!-- ▸ botón demo (elimina en prod) -->
+<button id="demo-call" class="demo-btn">DEMO CALL</button>
+
+
+<script src="{% static 'js/monitor/monitor.js' %}"></script>
 {% endblock %}
