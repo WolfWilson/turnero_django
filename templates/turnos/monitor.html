@@ -20,7 +20,7 @@
       <time id="clock" aria-label="Hora actual"></time>
       <span class="col-box">BOX</span>
     </header>
-
+    
     <ul id="turn-container">
       {% for t in turnos|slice:":8" %}
         <li class="turn-card {% if t.is_active %}active{% endif %}">
@@ -34,7 +34,7 @@
     </ul>
   </section>
 
-  <!-- Pane de video/imágen -->
+  <!-- Panel de video/imágen -->
   <!-- <section class="media-pane" aria-label="Contenido institucional">
     <img src="{% static 'media/placeholder.jpg' %}" alt="Video institucional" class="media-placeholder">
   </section>
