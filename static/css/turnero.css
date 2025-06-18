@@ -110,6 +110,22 @@ body{
   color: #fff;
 }
 
+/* ─── ESTADO DESHABILITADO PARA BOTONES MODERNOS ─── */
+.btn-modern:disabled,              /* estándar */
+.btn-modern[disabled] {            /* compat.  */
+  opacity: 0.45;                   /* luce apagado */
+  cursor: not-allowed;             /* mano → cruz */
+  box-shadow: none;                /* sin relieve */
+  backdrop-filter: none;           /* quita blur */
+  filter: grayscale(20%);          /* opcional */
+}
+
+/* Ajuste opcional si querés un verde más “gris”   */
+.btn-verde:disabled {
+  background: #6c986f;             /* verde apagado */
+}
+
+
 /* ─── INPUT DNI ─── */
 #dni-input{
   max-width:420px;height:90px;
@@ -123,8 +139,8 @@ body{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.9rem 2rem;
-  font-size: 1.5rem;
+  padding: 1.2rem 2.4rem;
+  font-size: 1.8rem;
   font-weight: 600;
   color: #fff;
   border: 2px solid rgba(255, 255, 255, 0.2);
@@ -207,15 +223,29 @@ body{
   font-size: 1.5rem;
 }
 
-/* ─── CATEGORÍAS ─── */
-.categoria-btn {
-  min-width:320px;height:90px;margin:1rem auto;
-  font-size:1.8rem;font-weight:700;
-  background:var(--gris-btn);color:#333;border:0;
-  border-radius:var(--br);box-shadow:0 3px 6px rgba(0,0,0,.2);
-  transition:transform .05s ease;
+/* ─── CATEGORÍAS · ESTILO MODERNO CON SOMBRA INTERNA ─── */
+/* ─── CATEGORÍAS · NEÓN GLOW ─── */
+.categoria-btn{
+  min-width:320px;height:90px;margin:1rem auto;padding:0 2rem;
+  font-size:1.9rem;font-weight:700;letter-spacing:.02em;
+  background:rgba(255,255,255,0.08);
+  color:#fff;border:2px solid transparent;border-radius:var(--br);
+  position:relative;cursor:pointer;overflow:hidden;
+  transition:transform .18s ease;
 }
-.categoria-btn:active{transform:scale(.96);}
+.categoria-btn::before{           /* halo neón */
+  content:"";
+  position:absolute;inset:-2px;
+  border-radius:inherit;
+  background:linear-gradient(130deg,#3bd8ff,#00c3ff,#008cff);
+  z-index:-1;                     /* detrás */
+  filter:blur(8px);opacity:.6;transition:opacity .25s ease;
+}
+.categoria-btn:hover::before{opacity:1;}
+.categoria-btn:hover{transform:translateY(-4px);}
+.categoria-btn:active{transform:scale(.95);}
+
+/* ─── PANTALLA CATEGORÍAS ─── */
 
 
 /* ─── PANTALLA OK ─── */
@@ -260,6 +290,30 @@ body{
   position:absolute!important;width:1px;height:1px;margin:-1px;border:0;padding:0;
   clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;
 }
+
+#mensaje-final{
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+  font-weight: 700;
+  letter-spacing: .02em;
+  margin-top: 4rem;
+}
+
+/* ─── “VOLVER” SIEMPRE ABAJO ─── */
+#cat-back{
+  position: fixed;          /* lo saca del flujo y lo ancla a la ventana */
+  left: 50%;                /* lo centra horizontalmente                 */
+  bottom: 2rem;             /* separación del borde inferior             */
+  transform: translateX(-50%);
+  z-index: 100;             /* por encima del resto                      */
+}
+
+#pantalla-cat h2 {
+  font-size: clamp(2.6rem, 5vw, 4rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+
 
 #debug-resolution {
   position: fixed;
