@@ -55,7 +55,14 @@
       <input id="dni-input" class="form-control text-center" readonly>
     </div>
 
-    <button id="dni-ok" class="btn btn-success fs-4 px-5 py-2" disabled>Confirmar</button>
+<button id="dni-ok" class="btn-modern btn-verde">
+  <span class="material-symbols-rounded" style="margin-right: .5rem;">thumb_up</span>
+  Confirmar
+</button>
+
+
+
+
   </div>
 </section>
 
@@ -64,7 +71,7 @@
 <section id="pantalla-cat" class="pantalla container py-5">
   <h2 class="mb-4">Seleccione el motivo de su trámite</h2>
   <div id="cat-container" class="row gy-3"></div>
-  <button id="cat-back" class="btn btn-secondary mt-4">Volver</button>
+  <button id="cat-back" class="btn-modern btn-amarillo">Volver</button>
 </section>
 
 
@@ -88,17 +95,9 @@
   </p>
 
   <div class="d-flex flex-column flex-md-row justify-content-center gap-4 fade-in" style="animation-delay:.15s">
-    <button id="otro-btn"
-            class="btn btn-wide text-white"
-            aria-label="Volver al menú (obtener otro turno)">
-      Volver al Menú
-    </button>
+<button id="otro-btn" class="btn-wide btn-modern btn-azul">Volver al Menú</button>
 
-    <button id="salir-btn"
-            class="btn btn-wide text-white"
-            aria-label="Salir (cerrar sesión)">
-      Salir
-    </button>
+<button id="salir-btn" class="btn-wide btn-modern btn-rojo">Salir</button>
   </div>
 
   <p id="mensaje-final" class="text-uppercase mt-5 fade-in" style="animation-delay:.25s">

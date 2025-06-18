@@ -11,28 +11,27 @@
     --size-btn:130px;
     --gap-btn:14px;
     --br:14px;
-  }
-  
-  /* ───────────────────  GLOBAL  ─────────────────── */
+}
 
-  html, body {
+/* ───────────────────  GLOBAL  ─────────────────── */
+html, body {
   height: 100%;
   width: 100%;
   margin: 0;
   overflow: hidden;
 }
 
-  body{
-    background:var(--azul-fondo);
-    color:#fff;
-    text-align:center;
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-    -webkit-font-smoothing:antialiased;
-  }
-  .pantalla{display:none}
-  .pantalla.activa{display:block}
-  
-  .pantalla {
+body{
+  background:var(--azul-fondo);
+  color:#fff;
+  text-align:center;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.pantalla{display:none}
+.pantalla.activa{display:block}
+
+.pantalla {
   display: none;
   height: 100%;
   overflow: hidden;   /* ← evita barras internas */
@@ -45,157 +44,224 @@
   align-items: center;
 }
 
-  /* centrado vertical en pantalla 1 */
-  #pantalla-dni .vcenter-inner{
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-  }
-
-  /* debajo de la sección “GLOBAL” o donde prefieras  */
-#pantalla-dni h2{
-    font-size:clamp(2.1rem, 5vw, 3.6rem);  /* ⇦ ajusta estos valores a tu gusto */
-    line-height:1.25;                      /* opcional: controla la separación vertical */
-  }
-  
-  
-  /* ─── TECLADO ─── */
-  #teclado .d-grid{
-    gap:var(--gap-btn);
-    grid-template-columns:repeat(3,var(--size-btn));
-  }
-  .key{
-    width:var(--size-btn);height:var(--size-btn);
-    border-radius:var(--br);
-    font-size:2.8rem;font-weight:700;
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 3px 6px rgba(0,0,0,.25);
-    border:0;user-select:none;
-    transition:transform .07s ease;
-  }
-  .key {
-  width: clamp(90px, 8vw, 130px);
-  height: clamp(90px, 8vw, 130px);
+/* centrado vertical en pantalla 1 */
+#pantalla-dni .vcenter-inner{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
 }
 
-  .key:active{transform:scale(.94);}
-  .key.num  {background:var(--azul-btn);}
-  .key.func {background:var(--rojo);}
-  .key.back {background:var(--naranja);}
-  .key span.material-symbols-rounded{font-size:2.9rem;font-weight:700;line-height:1;}
-  
-  /* ─── INPUT DNI ─── */
-  #dni-input{
-    max-width:420px;height:90px;
-    font-size:2.6rem;font-weight:700;letter-spacing:.06em;
-    border-radius:var(--br);
-    box-shadow:0 3px 6px rgba(0,0,0,.3) inset;
-  }
-  
-  /* ─── BOTÓN CONFIRMAR ─── */
-  #dni-ok{background:var(--verde);border-radius:var(--br);font-weight:600;}
+/* debajo de la sección “GLOBAL” o donde prefieras  */
+#pantalla-dni h2{
+  font-size:clamp(2.1rem, 5vw, 3.6rem);
+  line-height:1.25;
+}
 
-  /* Alert visual refinado */
-  #dni-alert {
-    font-size: 1.1rem;
-    font-weight: 500;
-    padding: 0.75rem 1rem;
-    background-color: #fff3cd;
-    color: #856404;
-    border-left: 5px solid #f1c40f;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    max-width: 500px;
-    margin: 0 auto 1rem auto;
-    transition: all 0.3s ease-in-out;
-  }
-  
-  #dni-alert .material-symbols-rounded {
-    font-size: 1.5rem;
-  }
-  
-  
-  /* ─── CATEGORÍAS ─── */
-  .categoria-btn{
-    min-width:320px;height:90px;margin:1rem auto;
-    font-size:1.8rem;font-weight:700;
-    background:var(--gris-btn);color:#333;border:0;
-    border-radius:var(--br);box-shadow:0 3px 6px rgba(0,0,0,.2);
-    transition:transform .05s ease;
-  }
-  .categoria-btn:active{transform:scale(.96);}
+/* ─── TECLADO ─── */
+#teclado .d-grid {
+  gap: var(--gap-btn);
+  grid-template-columns: repeat(3, var(--size-btn));
+}
 
-  #cat-back {
-    background: var(--amarillo);
-    color: #000;             /* texto oscuro sobre amarillo */
-    font-size: 1.8rem;
-    font-weight: 700;
-    padding: 1rem 2.5rem;
-    border: none;
-    border-radius: var(--br);
-    box-shadow: 0 3px 6px rgba(0,0,0,.25);
-    transition: transform .05s ease;
-  }
-  #cat-back:active {
-    transform: scale(0.96);
-  }
-  
-  /* ─── PANTALLA OK ─── */
-  #ok-nombre{
-    font-size:clamp(2.4rem,6vw,4.8rem);
-    font-weight:800;letter-spacing:.02em;margin-bottom:2rem;
-  }
-  .banner-ok{
-    background:var(--verde-banner);
-    border-radius:var(--br);
-    max-width:760px;margin:0 auto 2.5rem;
-    padding:1.2rem 1rem .9rem;
-    box-shadow:0 3px 6px rgba(0,0,0,.25);
-    line-height:1.2;color:#fff;
-  }
-  .banner-ok .txt-superior{
-    font-size:clamp(1.3rem,3vw,2.1rem);
-    font-weight:500;opacity:.9;
-  }
-  .banner-ok #ok-cat{
-    display:block;
-    margin-top:.1rem;
-    font-size:clamp(1.7rem,3.5vw,2.8rem);
-    font-weight:800;
-  }
-  #ok-espera{font-size:clamp(1.4rem,3vw,2.1rem);margin:2.5rem 0 3.5rem;}
-  .countdown-text{font-size:1.2rem;opacity:.8;margin-top:-1rem;}
-  .btn-wide{
-    width:270px;height:85px;
-    border-radius:var(--br);font-size:1.4rem;font-weight:600;
-  }
-  #otro-btn{background:var(--azul-btn);border:0;}
-  #salir-btn{background:var(--rojo);border:0;}
-  #otro-btn:hover,#otro-btn:active,
-  #salir-btn:hover,#salir-btn:active{filter:brightness(.90);}
-  #mensaje-final{
-    font-size:clamp(1.6rem,3.5vw,2.6rem);
-    font-weight:700;letter-spacing:.02em;margin-top:4rem;
-  }
-  
-  /* ─── ANIMACIÓN SUAVE ─── */
-  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-  .fade-in{animation:fadeIn .25s ease-out backwards;}
-  
-  /* ─── ACCESIBILIDAD ─── */
-  .btn-wide:focus-visible{outline:3px solid #fff;outline-offset:3px;}
-  .visually-hidden{
-    position:absolute!important;width:1px;height:1px;margin:-1px;border:0;padding:0;
-    clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;
-  }
-  
+.key {
+  width: clamp(70px, 6.4vw, 104px);
+  height: clamp(70px, 6.4vw, 104px);
+  border-radius: 1.2rem;
+  font-size: 2.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.12s ease-in-out;
+  color: #fff;
+}
 
-  #debug-resolution {
+.key:active {
+  transform: scale(0.94);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2) inset;
+}
+
+/* ─── Colores por tipo ─── */
+.key.num {
+  background: linear-gradient(to bottom right, #2f87b1, #1f658c);
+}
+
+.key.func {
+  background: linear-gradient(to bottom right, #c94444, #a03131);
+}
+
+.key.back {
+  background: linear-gradient(to bottom right, #ff8c32, #cc6a14);
+}
+
+/* ─── Íconos ─── */
+.key span.material-symbols-rounded {
+  font-size: 2.9rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+}
+
+/* ─── INPUT DNI ─── */
+#dni-input{
+  max-width:420px;height:90px;
+  font-size:2.6rem;font-weight:700;letter-spacing:.06em;
+  border-radius:var(--br);
+  box-shadow:0 3px 6px rgba(0,0,0,.3) inset;
+}
+
+/* ─── BOTONES MODERNOS REUTILIZABLES ─── */
+.btn-modern {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 2rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1.2rem;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.btn-modern:active {
+  transform: scale(0.96);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) inset;
+}
+
+.btn-verde {
+  background: linear-gradient(to right, #55c35d, #3ea94b);
+}
+.btn-verde:hover {
+  background: linear-gradient(to right, #3ea94b, #2f8f3a);
+}
+
+.btn-rojo {
+  background: linear-gradient(to right, #e04c4c, #c93030);
+}
+.btn-rojo:hover {
+  background: linear-gradient(to right, #c93030, #a32020);
+}
+
+.btn-azul {
+  background: linear-gradient(to right, #2f87b1, #1f658c);
+}
+.btn-azul:hover {
+  background: linear-gradient(to right, #1f658c, #165177);
+}
+
+.btn-amarillo {
+  background: linear-gradient(to right, #f4c542, #e0b834);
+  color: #000;
+}
+.btn-amarillo:hover {
+  background: linear-gradient(to right, #e0b834, #c9a72b);
+}
+
+/* ─── ÍCONO DENTRO DE BOTÓN ─── */
+.icono-btn {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-right: 0.6rem;
+  line-height: 1;
+}
+
+
+
+/* ─── ALERT ─── */
+#dni-alert {
+  font-size: 1.1rem;
+  font-weight: 500;
+  padding: 0.75rem 1rem;
+  background-color: #fff3cd;
+  color: #856404;
+  border-left: 5px solid #f1c40f;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  max-width: 500px;
+  margin: 0 auto 1rem auto;
+  transition: all 0.3s ease-in-out;
+}
+
+#dni-alert .material-symbols-rounded {
+  font-size: 1.5rem;
+}
+
+/* ─── CATEGORÍAS ─── */
+.categoria-btn {
+  min-width:320px;height:90px;margin:1rem auto;
+  font-size:1.8rem;font-weight:700;
+  background:var(--gris-btn);color:#333;border:0;
+  border-radius:var(--br);box-shadow:0 3px 6px rgba(0,0,0,.2);
+  transition:transform .05s ease;
+}
+.categoria-btn:active{transform:scale(.96);}
+
+
+/* ─── PANTALLA OK ─── */
+#ok-nombre{
+  font-size:clamp(2.4rem,6vw,4.8rem);
+  font-weight:800;letter-spacing:.02em;margin-bottom:2rem;
+}
+.banner-ok{
+  background:var(--verde-banner);
+  border-radius:var(--br);
+  max-width:760px;margin:0 auto 2.5rem;
+  padding:1.2rem 1rem .9rem;
+  box-shadow:0 3px 6px rgba(0,0,0,.25);
+  line-height:1.2;color:#fff;
+}
+.banner-ok .txt-superior{
+  font-size:clamp(1.3rem,3vw,2.1rem);
+  font-weight:500;opacity:.9;
+}
+.banner-ok #ok-cat{
+  display:block;
+  margin-top:.1rem;
+  font-size:clamp(1.7rem,3.5vw,2.8rem);
+  font-weight:800;
+}
+#ok-espera{font-size:clamp(1.4rem,3vw,2.1rem);margin:2.5rem 0 3.5rem;}
+.countdown-text{font-size:1.2rem;opacity:.8;margin-top:-1rem;}
+
+/* botones pantalla final con clases modernas */
+.btn-wide{
+  width:270px;height:85px;
+  border-radius:var(--br);font-size:1.4rem;font-weight:600;
+}
+
+/* ─── ANIMACIÓN SUAVE ─── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeIn .25s ease-out backwards;}
+
+/* ─── ACCESIBILIDAD ─── */
+.btn-wide:focus-visible{outline:3px solid #fff;outline-offset:3px;}
+.visually-hidden{
+  position:absolute!important;width:1px;height:1px;margin:-1px;border:0;padding:0;
+  clip:rect(0 0 0 0);clip-path:inset(50%);overflow:hidden;
+}
+
+#debug-resolution {
   position: fixed;
   bottom: 8px;
   right: 12px;
