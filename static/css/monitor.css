@@ -1,34 +1,77 @@
+/* ───────────  VARIABLES GLOBALES  ─────────── */
+:root{
+  /* paleta base */
+  --azul-fondo: #022436;
+  --azul-card : #3ec0ff;
+  --gris-card : #d9d9d9;
+  --naranja   : #ff8c32;
+  --txt-oscuro: #223;
+  --txt-claro : #fff;
+
+  /* tamaños reusables */
+  --radio     : 14px;
+  --sombra    : 0 0 18px rgba(0,0,0,.45);
+  --duracion  : .35s;
+  --ease      : cubic-bezier(.4,0,.2,1);
+}
+
+html{font-size:300%}   /* 100 % → 18 px pasa a 180 % → 32 px aprox.           */
+@media (min-width:1920px){
+  html{font-size:250%} /* en 4 K la subimos aún más                            */
+}
+
+#clock{display:none}
+
 /* reset mínimo */
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;font-family:'Roboto',sans-serif;background:#022436;color:#fff}
+html,body{
+  height:100%;
+  overflow:hidden;
+  font-family:'Roboto', sans-serif;
+  background:var(--azul-fondo);
+  color:var(--txt-claro);
+}
 
-/* Grid principal: dos columnas fijas */
+/* ───────────  GRID PRINCIPAL  ─────────── */
 .monitor-grid{
   display:grid;
   grid-template-columns: 42% 58%;
   height:100%;
 }
 
-/* ────────────── Columna turnos ────────────── */
+/* ───────────  COLUMNA TURNOS  ─────────── */
 .turn-list{
   padding:2vh 2vw;
   display:flex;
   flex-direction:column;
   gap:1.2vh;
+  /* animación sutil al aparecer los turnos */
+  animation:floater .8s var(--ease) both;
 }
 
+@keyframes floater{
+  from{opacity:0;transform:translateY(12px)}
+  to  {opacity:1;transform:none}
+}
+
+/* encabezado */
 .turn-header{
   display:grid;
   grid-template-columns: 60px 1fr 110px 90px;
   align-items:center;
   font-weight:700;
-  font-size:2.2vh;
+  font-size:clamp(1rem, 2.2vh, 1.4rem);
   letter-spacing:1px;
   text-shadow:0 0 8px #fff;
 }
 
-#clock{justify-self:center}
+/* Reloj */
+#clock{
+  justify-self:center;
+  font-variant-numeric:tabular-nums;
+}
 
+/* lista de tarjetas */
 #turn-container{
   list-style:none;
   display:flex;
@@ -36,32 +79,45 @@ html,body{height:100%;overflow:hidden;font-family:'Roboto',sans-serif;background
   gap:1.2vh;
 }
 
-/* Tarjetas */
+/* ───── Tarjetas de turno ───── */
 .turn-card{
   display:grid;
   grid-template-columns:60px 1fr 90px;
   align-items:center;
   padding:1.4vh 1vw;
-  border-radius:8px;
-  background:#d9d9d9;
-  color:#223;
-  font-size:2.4vh;
+  border-radius:var(--radio);
+  background:var(--gris-card);
+  color:var(--txt-oscuro);
+  font-size:clamp(1rem,2.4vh,1.5rem);
   font-weight:500;
+  box-shadow:var(--sombra);
+  transition:transform var(--duracion) var(--ease),
+             box-shadow var(--duracion) var(--ease);
 }
-.turn-card .bell{font-size:4vh;color:#223}
+.turn-card .bell{
+  font-size:4vh;
+  color:var(--txt-oscuro);
+}
+
+/* efecto “destacar” en la tarjeta activa */
 .turn-card.active{
-  background:#3ec0ff;
-  color:#fff;
+  background:var(--azul-card);
+  color:var(--txt-claro);
+  transform:scale(1.03);
+  box-shadow:0 0 24px rgba(62,192,255,.6);
 }
-.turn-card.active .bell{color:#fff}
+.turn-card.active .bell{
+  color:var(--txt-claro);
+}
 
 /* Item vacío */
 .turn-empty{
-  font-size:2.2vh;
-  opacity:.7;
+  font-size:clamp(.9rem,2.2vh,1.3rem);
+  opacity:.6;
+  font-style:italic;
 }
 
-/* ────────────── Columna media ────────────── */
+/* ───────────  COLUMNA MEDIA  ─────────── */
 .media-pane{
   position:relative;
   overflow:hidden;
@@ -73,10 +129,7 @@ html,body{height:100%;overflow:hidden;font-family:'Roboto',sans-serif;background
   object-fit:cover;
 }
 
-
-/* …(todo lo previo permanece igual)… */
-
-/* ───────── Overlay llamada ───────── */
+/* ───────────  OVERLAY DE LLAMADA  ─────────── */
 #alert-overlay{
   position:fixed;
   inset:0;
@@ -87,51 +140,70 @@ html,body{height:100%;overflow:hidden;font-family:'Roboto',sans-serif;background
   z-index:900;
   opacity:0;
   visibility:hidden;
-  transition:opacity .5s ease;
+  transition:opacity .5s var(--ease);
 }
-
 #alert-overlay.show{
   opacity:1;
   visibility:visible;
 }
 
+/* contenedor de tarjetas dentro del overlay */
 #alert-wrapper{
   display:flex;
   flex-wrap:wrap;
   gap:2vw;
 }
 
+/* tarjeta de alerta */
 .alert-card{
   display:flex;
   align-items:center;
   gap:1vw;
-  background:#3ec0ff;
+  background:var(--azul-card);
   padding:2.2vh 3.4vw;
-  border-radius:14px;
-  font-size:3.2vh;
+  border-radius:var(--radio);
+  font-size:clamp(1.3rem,3.2vh,1.8rem);
   font-weight:500;
-  color:#fff;
-  box-shadow:0 0 18px rgba(0,0,0,.45);
+  color:var(--txt-claro);
+  box-shadow:var(--sombra);
+  animation:pulse 1.8s infinite;
 }
 .alert-card .bell{font-size:5.4vh}
 
+/* animación latido */
+@keyframes pulse{
+  0%,100%{transform:scale(1)}
+  50%    {transform:scale(1.06)}
+}
 
-/* Botón de prueba — quitar en producción */
-/* Botón de prueba — quitar en producción */
+/* ───────────  BOTÓN DE DEMO (elimina en prod)  ─────────── */
 .demo-btn{
   position:fixed;
   bottom:2vh;
   right:2vw;
   z-index:950;
-  background:#ff8c32;
-  color:#fff;
+  background:var(--naranja);
+  color:var(--txt-claro);
   border:none;
-  border-radius:8px;
+  border-radius:var(--radio);
   padding:1.2vh 2vw;
-  font-size:2vh;
+  font-size:clamp(.8rem,2vh,1rem);
   font-weight:700;
   cursor:pointer;
   box-shadow:0 0 12px rgba(0,0,0,.35);
-  transition:opacity .3s;
+  transition:opacity var(--duracion) var(--ease),
+             transform var(--duracion) var(--ease);
 }
-.demo-btn:hover{opacity:.85}
+.demo-btn:hover{
+  opacity:.85;
+  transform:translateY(-2px);
+}
+
+/* ───────────  MEDIA QUERIES  ─────────── */
+/* Ajustes mínimos para pantallas menores a 1024px */
+@media (max-width:1024px){
+  .monitor-grid{
+    grid-template-columns: 100%;
+  }
+  .media-pane{display:none;} /* oculta video si la pantalla es chica */
+}

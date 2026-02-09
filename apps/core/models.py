@@ -1,14 +1,19 @@
+# apps/core/models.py
 from django.db import models
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-# ---------------------------------------------------------------------
+# ───────────────────────────────────────────────
 # 0. Área / Oficina
-# ---------------------------------------------------------------------
+# ───────────────────────────────────────────────
 class Area(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     slug   = models.SlugField(unique=True)
+    activa = models.BooleanField(
+        default=True,
+        help_text="Permite deshabilitar un área sin eliminarla"
+    )
 
     class Meta:
         ordering = ["nombre"]
@@ -19,19 +24,19 @@ class Area(models.Model):
         return self.nombre
 
 
-# ---------------------------------------------------------------------
-# 0.1  Administradores de área (rol granular)
-# ---------------------------------------------------------------------
+# ───────────────────────────────────────────────
+# 0.1  Administradores de área
+# ───────────────────────────────────────────────
 class AreaAdministrador(models.Model):
     """Vincula un usuario con privilegios de administración a un área."""
     usuario = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,               # al borrar el usuario, cae la vinculación
+        on_delete=models.CASCADE,
         related_name="areas_administradas",
     )
     area = models.ForeignKey(
         Area,
-        on_delete=models.CASCADE,               # si el área se elimina, se limpian vínculos
+        on_delete=models.CASCADE,
         related_name="administradores",
     )
 
@@ -44,53 +49,83 @@ class AreaAdministrador(models.Model):
         return f"{self.usuario} ↔ {self.area}"
 
 
-# ---------------------------------------------------------------------
-# 1. Categorías y Mesas
-# ---------------------------------------------------------------------
+# ───────────────────────────────────────────────
+# 1. Categorías de atención
+# ───────────────────────────────────────────────
 class Categoria(models.Model):
     area   = models.ForeignKey(
         Area,
-        on_delete=models.PROTECT,               # impedir borrar un área con categorías
+        on_delete=models.PROTECT,
         related_name="categorias",
     )
     nombre = models.CharField(max_length=100)
+    activa = models.BooleanField(
+        default=True,
+        help_text="Oculta o muestra la categoría para emisión y atención"
+    )
+
+    # Operadores habilitados para atenderla (through con flag)
+    operadores = models.ManyToManyField(
+        User,
+        through="CategoriaOperador",
+        related_name="categorias_habilitadas",
+        blank=True,
+        limit_choices_to={"groups__name": "Operador"},
+    )
 
     class Meta:
         ordering = ["nombre"]
         unique_together = ("area", "nombre")
         verbose_name = "categoría"
+        verbose_name_plural = "categorías"
 
     def __str__(self):
-        return f"{self.nombre} ({self.area})"
+        estado = "✔" if self.activa else "✖"
+        return f"{self.nombre} ({self.area}) {estado}"
 
 
+class CategoriaOperador(models.Model):
+    """Relación operador ↔ categoría con posibilidad de habilitar/deshabilitar."""
+    operador   = models.ForeignKey(User, on_delete=models.CASCADE)
+    categoria  = models.ForeignKey(Categoria, on_delete=models.CASCADE)
+    habilitada = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ("operador", "categoria")
+        verbose_name = "categoría habilitada a operador"
+        verbose_name_plural = "categorías habilitadas a operadores"
+
+    def __str__(self):
+        estado = "✔" if self.habilitada else "✖"
+        return f"{self.operador} → {self.categoria} {estado}"
+
+
+# ───────────────────────────────────────────────
+# 1.b Mesas de atención
+# ───────────────────────────────────────────────
 class Mesa(models.Model):
-    area = models.ForeignKey(
+    area   = models.ForeignKey(
         Area,
-        on_delete=models.PROTECT,               # no borrar área con mesas activas
+        on_delete=models.PROTECT,
         related_name="mesas",
     )
     nombre = models.CharField(max_length=20)
     activa = models.BooleanField(default=True)
-    categorias = models.ManyToManyField(
-        Categoria,
-        blank=True,
-        related_name="mesas",
-        help_text="Si está vacío, la mesa atiende cualquier categoría.",
-    )
 
     class Meta:
         ordering = ["area", "nombre"]
         unique_together = ("area", "nombre")
         verbose_name = "mesa"
+        verbose_name_plural = "mesas"
 
     def __str__(self):
-        return f"{self.area} · {self.nombre}"
+        estado = "✔" if self.activa else "✖"
+        return f"{self.area} · {self.nombre} {estado}"
 
 
-# ---------------------------------------------------------------------
-# 2. Persona (modo DNI)
-# ---------------------------------------------------------------------
+# ───────────────────────────────────────────────
+# 2. Persona (identificación por DNI)
+# ───────────────────────────────────────────────
 class Persona(models.Model):
     dni      = models.PositiveBigIntegerField(unique=True)
     nombre   = models.CharField(max_length=120)
@@ -99,6 +134,7 @@ class Persona(models.Model):
     class Meta:
         ordering = ["apellido", "nombre"]
         verbose_name = "persona"
+        verbose_name_plural = "personas"
 
     def __str__(self):
         return f"{self.apellido}, {self.nombre} ({self.dni})"
@@ -108,10 +144,11 @@ class Persona(models.Model):
         return f"{self.nombre} {self.apellido}"
 
 
-# ---------------------------------------------------------------------
+# ───────────────────────────────────────────────
 # 3. Turno
-# ---------------------------------------------------------------------
+# ───────────────────────────────────────────────
 class Turno(models.Model):
+
     class Modo(models.TextChoices):
         NUMERACION = "ticket", "Ticket numerado"
         DNI        = "dni",    "Identificación por DNI"
@@ -126,7 +163,7 @@ class Turno(models.Model):
     categoria = models.ForeignKey(Categoria, on_delete=models.PROTECT)
     mesa_asignada = models.ForeignKey(
         Mesa,
-        on_delete=models.SET_NULL,    # si se desactiva una mesa, mantenemos el histórico
+        on_delete=models.SET_NULL,
         null=True, blank=True,
     )
     estado    = models.CharField(max_length=4, choices=Estado.choices, default=Estado.PENDIENTE)
@@ -162,17 +199,17 @@ class Turno(models.Model):
         return f"{self.area} · {self.persona} – {self.categoria}"
 
     @property
-# --- en Turno.display -----------------------------------
     def display(self) -> str:
+        """Texto breve para carteles o dashboards."""
         if self.modo == self.Modo.NUMERACION:
             return f"N° {self.numero} • {self.categoria} • Mesa {self.mesa_asignada}"
-        nombre = self.persona.nombre_completo if self.persona else ""  # ← seguro
+        nombre = self.persona.nombre_completo if self.persona else ""
         return f"{nombre} • {self.categoria} • Mesa {self.mesa_asignada}"
 
 
-# ---------------------------------------------------------------------
+# ───────────────────────────────────────────────
 # 4. Atención
-# ---------------------------------------------------------------------
+# ───────────────────────────────────────────────
 class Atencion(models.Model):
     turno = models.OneToOneField(Turno, on_delete=models.CASCADE)
     operador = models.ForeignKey(
@@ -186,6 +223,8 @@ class Atencion(models.Model):
 
     class Meta:
         ordering = ["-iniciado_en"]
+        verbose_name = "atención"
+        verbose_name_plural = "atenciones"
 
     def __str__(self):
         return f"{self.turno.area} · Atención #{self.turno.pk} por {self.operador}"
