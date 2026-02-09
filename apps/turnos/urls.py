@@ -8,6 +8,5 @@ urlpatterns = [
     path("",             views.turnero_public, name="turnero_public"),
     path("ok/<int:pk>/", views.confirmacion,  name="confirmacion"),
     path("monitor/",     views.monitor,       name="monitor"),
-    path("categorias.json", views.categorias_json, name="categorias_json"),
-    # path("categorias.json", views.categorias_json, name="categorias_json"),
+    path("tramites.json", views.tramites_json, name="tramites_json"),
 ]

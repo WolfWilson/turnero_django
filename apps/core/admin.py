@@ -1,22 +1,55 @@
 from django.contrib import admin
 
 from .models import (
+    Usuario,
+    Rol,
+    UsuarioRol,
     Area,
     AreaAdministrador,
-    Categoria,
-    CategoriaOperador,
-    Mesa,
+    AreaUsuario,
     Persona,
+    Mesa,
+    Tramite,
+    TramiteOperador,
+    EstadoTicket,
+    EstadoTurno,
+    Ticket,
     Turno,
-    Atencion,
+    ConfiguracionArea,
 )
 
+
 # ───────────────────────────────
-#   Inlines útiles
+#   Inlines
 # ───────────────────────────────
-class CategoriaOperadorInline(admin.TabularInline):
-    model = CategoriaOperador
+class UsuarioRolInline(admin.TabularInline):
+    model = UsuarioRol
     extra = 1
+
+
+class TramiteOperadorInline(admin.TabularInline):
+    model = TramiteOperador
+    extra = 1
+
+
+# ───────────────────────────────
+#   Usuario
+# ───────────────────────────────
+@admin.register(Usuario)
+class UsuarioAdmin(admin.ModelAdmin):
+    list_display  = ("username", "display_name", "is_active")
+    list_editable = ("is_active",)
+    search_fields = ("username", "display_name")
+    inlines       = [UsuarioRolInline]
+
+
+# ───────────────────────────────
+#   Rol
+# ───────────────────────────────
+@admin.register(Rol)
+class RolAdmin(admin.ModelAdmin):
+    list_display  = ("nombre_rol", "descripcion")
+    search_fields = ("nombre_rol",)
 
 
 # ───────────────────────────────
@@ -26,7 +59,6 @@ class CategoriaOperadorInline(admin.TabularInline):
 class AreaAdmin(admin.ModelAdmin):
     list_display  = ("nombre", "activa")
     list_editable = ("activa",)
-    prepopulated_fields = {"slug": ("nombre",)}
     search_fields = ("nombre", "slug")
 
 
@@ -37,19 +69,27 @@ class AreaAdmin(admin.ModelAdmin):
 class AreaAdministradorAdmin(admin.ModelAdmin):
     list_display = ("usuario", "area")
     list_filter  = ("area",)
-    autocomplete_fields = ("usuario", "area")
 
 
 # ───────────────────────────────
-#   Categoría
+#   AreaUsuario
 # ───────────────────────────────
-@admin.register(Categoria)
-class CategoriaAdmin(admin.ModelAdmin):
+@admin.register(AreaUsuario)
+class AreaUsuarioAdmin(admin.ModelAdmin):
+    list_display = ("usuario", "area")
+    list_filter  = ("area",)
+
+
+# ───────────────────────────────
+#   Tramite (ex Categoría)
+# ───────────────────────────────
+@admin.register(Tramite)
+class TramiteAdmin(admin.ModelAdmin):
     list_display  = ("nombre", "area", "activa")
     list_filter   = ("area", "activa")
     list_editable = ("activa",)
     search_fields = ("nombre",)
-    inlines       = [CategoriaOperadorInline]
+    inlines       = [TramiteOperadorInline]
 
 
 # ───────────────────────────────
@@ -73,23 +113,42 @@ class PersonaAdmin(admin.ModelAdmin):
 
 
 # ───────────────────────────────
+#   Catálogos de estado
+# ───────────────────────────────
+@admin.register(EstadoTicket)
+class EstadoTicketAdmin(admin.ModelAdmin):
+    list_display = ("id", "nombre", "descripcion")
+
+
+@admin.register(EstadoTurno)
+class EstadoTurnoAdmin(admin.ModelAdmin):
+    list_display = ("id", "nombre", "descripcion")
+
+
+# ───────────────────────────────
+#   Ticket
+# ───────────────────────────────
+@admin.register(Ticket)
+class TicketAdmin(admin.ModelAdmin):
+    list_display  = ("id", "persona", "area", "estado", "fecha_hora_creacion")
+    list_filter   = ("area", "estado")
+    search_fields = ("persona__dni", "persona__apellido")
+
+
+# ───────────────────────────────
 #   Turno
 # ───────────────────────────────
 @admin.register(Turno)
 class TurnoAdmin(admin.ModelAdmin):
-    list_display   = ("display", "estado", "creado_en")
-    list_filter    = ("area", "estado", "fecha")
-    autocomplete_fields = ("categoria", "mesa_asignada", "persona")
-
-    #necesario para el searchfields
-    search_fields = ("numero", "", "persona__dni", "persona__apellido", "persona__nombre", "categoria__nombre")
+    list_display  = ("id", "numero_visible", "tramite", "area", "estado", "fecha_hora_creacion")
+    list_filter   = ("area", "estado", "fecha_turno")
+    search_fields = ("numero_visible", "ticket__persona__dni")
 
 
 # ───────────────────────────────
-#   Atención
+#   ConfiguracionArea
 # ───────────────────────────────
-@admin.register(Atencion)
-class AtencionAdmin(admin.ModelAdmin):
-    list_display   = ("turno", "operador", "iniciado_en", "finalizado_en")
-    list_filter    = ("operador", "iniciado_en", "finalizado_en")
-    autocomplete_fields = ("turno", "operador")
+@admin.register(ConfiguracionArea)
+class ConfiguracionAreaAdmin(admin.ModelAdmin):
+    list_display = ("area", "clave", "valor")
+    list_filter  = ("area",)

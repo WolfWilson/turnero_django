@@ -85,10 +85,27 @@ WSGI_APPLICATION = 'turnero.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
+# SQLite (desarrollo local)
+DATABASES_SQLITE = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+# SQL Server (producción)
+DATABASES = {
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': env('DB_NAME'),
+        'USER': env('SQL_USER'),
+        'PASSWORD': env('SQL_PASS'),
+        'HOST': env('DB_HOST'),
+        'PORT': '',
+        'OPTIONS': {
+            'driver': env('DB_DRIVER'),
+            'extra_params': 'TrustServerCertificate=yes',
+        },
     }
 }
 

@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^C:/Users/wbenitez/Downloads/Git/turnero_django/venv/Scripts/python\\.exe test_sqlserver_connection\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

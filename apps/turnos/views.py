@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.utils import timezone
-from apps.core.models import Categoria, Turno
+from apps.core.models import Tramite, Turno
 from .forms import SolicitudTurnoForm
 from .services import crear_turno
 
@@ -11,17 +12,17 @@ def turnero_public(request):
         form = SolicitudTurnoForm(request.POST)
         if form.is_valid():
             dni = form.cleaned_data["dni"] or None
-            categoria = form.cleaned_data["categoria"]
-            turno, _ = crear_turno(dni, categoria)
+            tramite = form.cleaned_data["tramite"]
+            turno, _ = crear_turno(dni, tramite)
             return redirect("turnos:confirmacion", pk=turno.pk)
     else:
         form = SolicitudTurnoForm()
 
-    categorias = Categoria.objects.all()
+    tramites = Tramite.objects.filter(activa=True)
     return render(
         request,
         "turnos/turnero_public.html",
-        {"form": form, "categorias": categorias},
+        {"form": form, "tramites": tramites},
     )
 
 
@@ -34,16 +35,14 @@ def confirmacion(request, pk):
 # ---------- MONITOR EN SALA DE ESPERA ----------
 def monitor(request):
     hoy = timezone.localdate()
-    lista = Turno.objects.filter(fecha=hoy).order_by("creado_en")
+    lista = Turno.objects.filter(fecha_turno=hoy).order_by("fecha_hora_creacion")
     return render(request, "turnos/monitor.html", {"turnos": lista})
 
-# ---------- CATEGORÍAS EN FORMATO JSON ----------
-from django.http import JsonResponse
-from apps.core.models import Categoria
 
-def categorias_json(request):
+# ---------- TRÁMITES EN FORMATO JSON ----------
+def tramites_json(request):
     data = [
-        {"id": c.id, "nombre": c.nombre} # type: ignore[attr-defined]
-        for c in Categoria.objects.all().order_by("nombre")[:8]
+        {"id": t.id, "nombre": t.nombre}
+        for t in Tramite.objects.filter(activa=True).order_by("nombre")[:8]
     ]
     return JsonResponse(data, safe=False)

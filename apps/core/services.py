@@ -1,14 +1,14 @@
-from datetime import date
+﻿from datetime import date
 import json
 from pathlib import Path
 
 from django.db import transaction
-from django.db.models import Max, Q
-from django.db.utils import IntegrityError
+from django.db.models import Max
+from django.utils import timezone
 
-from .models import Area, Categoria, Mesa, Persona, Turno
+from .models import Area, Tramite, Mesa, Persona, Ticket, Turno, EstadoTicket, EstadoTurno
 
-# ─── “SP” ficticio ───────────────────────────────────────────────────
+# --- "SP" ficticio ---
 _JSON_PATH = Path(__file__).resolve().parent / "fixtures" / "personas.json"
 
 try:
@@ -24,66 +24,68 @@ def buscar_persona_por_dni(dni: int) -> dict | None:
     return _PERSONAS_FAKE.get(dni)
 
 
-# ─── Servicio central ────────────────────────────────────────────────
+# --- Servicio central ---
 @transaction.atomic
-def emitir_turno(area: Area, categoria: Categoria, dni: int | None) -> Turno:
+def emitir_turno(area: Area, tramite: Tramite, dni: int | None) -> Turno:
     """
-    Devuelve un Turno (nuevo o existente) según reglas de negocio.
-    Puede lanzar ValueError con mensaje para el usuario.
+    Crea un Ticket + Turno segun el nuevo esquema.
+    Devuelve el Turno (nuevo o existente si la persona ya tiene uno pendiente).
     """
-    hoy = date.today()
+    ahora = timezone.now()
+    hoy   = ahora.date()
 
-    # 1) Persona (modo DNI)
+    # 1) Persona
     persona = None
     if dni:
         datos = buscar_persona_por_dni(dni)
         if not datos:
-            raise ValueError("DNI no encontrado en padrón")
+            raise ValueError("DNI no encontrado en padron")
         persona, _ = Persona.objects.get_or_create(
             dni=dni,
-            defaults=dict(nombre=datos["nombre"], apellido=datos["apellido"])
+            defaults=dict(nombre=datos["nombre"], apellido=datos["apellido"]),
         )
 
-        # ¿Ya tiene un turno pendiente o en atención?
+        # Ya tiene un turno pendiente o llamando en esta area?
         existente = Turno.objects.filter(
+            ticket__persona=persona,
             area=area,
-            persona=persona,
-            estado__in=[Turno.Estado.PENDIENTE, Turno.Estado.EN_ATENCION],
+            estado_id__in=[Turno.PENDIENTE, Turno.LLAMANDO],
         ).first()
         if existente:
-            return existente  # devolvemos el mismo turno, no se crea otro
+            return existente
 
-    # 2) Mesa sugerida
-    mesa = (
-        Mesa.objects.filter(activa=True, area=area)
-        .filter(Q(categorias=categoria) | Q(categorias=None))
-        .order_by("id")
-        .first()
+    if persona is None:
+        raise ValueError("Se requiere DNI para emitir turno")
+
+    # 2) Numeracion visible del dia
+    ultimo = (
+        Turno.objects.filter(area=area, fecha_turno=hoy)
+        .aggregate(Max("numero_visible"))["numero_visible__max"] or 0
+    )
+    numero_visible = ultimo + 1
+
+    # 3) Crear Ticket (contenedor)
+    estado_ticket_pend = EstadoTicket.objects.get(pk=Ticket.PENDIENTE)
+    ticket = Ticket.objects.create(
+        persona=persona,
+        area=area,
+        prioridad=0,
+        fecha_creacion=hoy,
+        fecha_hora_creacion=ahora,
+        estado=estado_ticket_pend,
     )
 
-    # 3) Numeración (modo ticket)
-    modo = Turno.Modo.DNI
-    numero = None
-    if persona is None:
-        modo = Turno.Modo.NUMERACION
-        ultimo = (
-            Turno.objects.filter(area=area, fecha=hoy, modo=modo)
-            .aggregate(Max("numero"))["numero__max"] or 0
-        )
-        numero = ultimo + 1
-
-    # 4) Crear turno
-    try:
-        turno = Turno.objects.create(
-            area=area,
-            categoria=categoria,
-            persona=persona,
-            modo=modo,
-            numero=numero,
-            mesa_asignada=mesa,
-        )
-    except IntegrityError:
-        # Si llegara a colarse (raro por la comprobación previa)
-        raise ValueError("Ya existe un turno activo para esta persona")
+    # 4) Crear Turno
+    estado_turno_pend = EstadoTurno.objects.get(pk=Turno.PENDIENTE)
+    turno = Turno.objects.create(
+        ticket=ticket,
+        tramite=tramite,
+        orden=1,
+        area=area,
+        numero_visible=numero_visible,
+        estado=estado_turno_pend,
+        fecha_turno=hoy,
+        fecha_hora_creacion=ahora,
+    )
 
     return turno

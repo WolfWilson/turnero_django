@@ -1,6 +1,6 @@
 # apps/turnos/forms.py
 from django import forms
-from apps.core.models import Categoria
+from apps.core.models import Tramite
 
 class SolicitudTurnoForm(forms.Form):
     dni = forms.CharField(
@@ -9,8 +9,8 @@ class SolicitudTurnoForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={"placeholder": "Ej.: 12345678"}),
     )
-    categoria = forms.ModelChoiceField(
-        queryset=Categoria.objects.all(),
+    tramite = forms.ModelChoiceField(
+        queryset=Tramite.objects.filter(activa=True),
         empty_label="Seleccione el trámite",
-        label="Categoría / Motivo",
+        label="Trámite / Motivo",
     )

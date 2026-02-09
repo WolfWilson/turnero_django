@@ -1,76 +1,72 @@
-from django.db import connection, transaction, models
+﻿from django.db import transaction
+from django.db.models import Max
 from django.utils import timezone
 from apps.core.models import (
     Turno,
-    Mesa,
-    Categoria,
+    Ticket,
+    Tramite,
     Persona,
-    Turno as T,
+    EstadoTicket,
+    EstadoTurno,
 )
-
-# ----------------------------------------------------------------------
-# Utilidades internas
-# ----------------------------------------------------------------------
-def _siguiente_numero() -> int:
-    today = timezone.localdate()
-    ultimo = (
-        Turno.objects.filter(fecha=today, modo="ticket")
-        .aggregate(models.Max("numero"))["numero__max"]
-        or 0
-    )
-    return ultimo + 1
-
-
-def _asignar_mesa(categoria: Categoria) -> Mesa | None:
-    """Devuelve la primera mesa activa compatible con la categoría."""
-    compatibles = (
-        Mesa.objects.filter(activa=True)
-        .filter(
-            models.Q(categorias=categoria) | models.Q(categorias__isnull=True)
-        )
-        .distinct()
-    )
-    return compatibles.first()
 
 
 # ----------------------------------------------------------------------
 # API principal
 # ----------------------------------------------------------------------
-def crear_turno(dni: str | None, categoria: Categoria):
+def crear_turno(dni: str | None, tramite: Tramite):
     """
-    Crea un turno:
-    - Modo DNI si el parámetro `dni` tiene valor.
-    - Modo Ticket si `dni` es None o cadena vacía.
+    Crea Ticket + Turno.
+    - Requiere DNI.
+    - Si ya existe turno pendiente/llamando, devuelve el existente.
     Devuelve (turno, creado_bool).
     """
+    ahora = timezone.now()
+    hoy   = ahora.date()
+
     with transaction.atomic():
-        if dni:
-            # ---------------- MODO 2 (DNI) ----------------
-            persona, _ = Persona.objects.get_or_create(dni=dni)
-            # Aquí podrías invocar el SP y completar nombre/apellido
-            turno_existente = Turno.objects.filter(
-                persona=persona,
-                estado__in=["pend", "prog"],
-            ).first()
-            if turno_existente:
-                return turno_existente, False
+        if not dni:
+            raise ValueError("Se requiere DNI para emitir turno")
 
-            mesa = _asignar_mesa(categoria)
-            turno = Turno.objects.create(
-                modo="dni",
-                categoria=categoria,
-                persona=persona,
-                mesa_asignada=mesa,
-            )
-            return turno, True
+        persona, _ = Persona.objects.get_or_create(dni=int(dni))
 
-        # ---------------- MODO 1 (TICKET) ----------------
-        numero = _siguiente_numero()
-        mesa = _asignar_mesa(categoria)
+        # Turno existente pendiente?
+        turno_existente = Turno.objects.filter(
+            ticket__persona=persona,
+            area=tramite.area,
+            estado_id__in=[Turno.PENDIENTE, Turno.LLAMANDO],
+        ).first()
+        if turno_existente:
+            return turno_existente, False
+
+        # Numeracion
+        ultimo = (
+            Turno.objects.filter(area=tramite.area, fecha_turno=hoy)
+            .aggregate(Max("numero_visible"))["numero_visible__max"] or 0
+        )
+        numero_visible = ultimo + 1
+
+        # Ticket
+        estado_ticket_pend = EstadoTicket.objects.get(pk=Ticket.PENDIENTE)
+        ticket = Ticket.objects.create(
+            persona=persona,
+            area=tramite.area,
+            prioridad=0,
+            fecha_creacion=hoy,
+            fecha_hora_creacion=ahora,
+            estado=estado_ticket_pend,
+        )
+
+        # Turno
+        estado_turno_pend = EstadoTurno.objects.get(pk=Turno.PENDIENTE)
         turno = Turno.objects.create(
-            modo="ticket",
-            numero=numero,
-            categoria=categoria,
-            mesa_asignada=mesa,
+            ticket=ticket,
+            tramite=tramite,
+            orden=1,
+            area=tramite.area,
+            numero_visible=numero_visible,
+            estado=estado_turno_pend,
+            fecha_turno=hoy,
+            fecha_hora_creacion=ahora,
         )
         return turno, True
