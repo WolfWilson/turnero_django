@@ -1,3 +1,4 @@
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
 
@@ -8,6 +9,8 @@ def postlogin(request):
         return redirect("administracion:home")   # dashboard admin
     if request.user.groups.filter(name="Operador").exists():
         return redirect("atencion:panel_mesa")   # panel operador
-    return redirect("logout")    # sin grupo válido → fuerza logout
+    # sin grupo válido → fuerza logout
+    logout(request)
+    return redirect("login")
 
 
