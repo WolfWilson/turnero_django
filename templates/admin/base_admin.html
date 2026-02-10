@@ -1,14 +1,90 @@
-{% extends "base_private.html" %}
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
 {% block body %}
-  <nav class="flex" style="background: var(--bg-dark);padding:var(--space-2);">
-    <a href="{% url 'administracion:home' %}">
-    <a href="{% url 'turnos:monitor' %}"  target="_blank" class="btn btn-secondary">Monitor</a>
-    <a href="{% url 'turnos:turnero_public' %}" target="_blank" class="btn btn-secondary">Tótem</a>
-    <span style="margin-left:auto; margin-right:1rem;">{{ request.user.username }}</span>
-    <form method="post" action="{% url 'logout' %}" style="margin:0;">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-primary">Salir</button>
-    </form>
-  </nav>
-  {% block content %}{% endblock %}
+<div class="dashboard-layout">
+  <!-- SIDEBAR -->
+  <aside class="dashboard-sidebar">
+    <!-- Header -->
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <i class="fas fa-ticket-alt"></i>
+      </div>
+      <h2 class="sidebar-title">TURNERO</h2>
+      <p class="sidebar-subtitle">Sistema de Gestión</p>
+    </div>
+    
+    <!-- User Info -->
+    <div class="sidebar-user">
+      <div class="user-avatar">
+        {{ request.user.first_name|slice:":1"|upper }}{{ request.user.last_name|slice:":1"|upper }}
+      </div>
+      <div class="user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+      <div class="user-role">
+        <i class="fas fa-shield-halved"></i>
+        {% if request.user.is_superuser %}
+          SuperAdmin
+        {% else %}
+          Administrador
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Principal</div>
+        <a href="{% url 'administracion:home' %}" class="nav-item active">
+          <i class="fas fa-home"></i>
+          <span>Dashboard</span>
+        </a>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">Turnos</div>
+        <a href="{% url 'turnos:monitor' %}" class="nav-item" target="_blank">
+          <i class="fas fa-tv"></i>
+          <span>Monitor Público</span>
+          <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 0.8rem;"></i>
+        </a>
+        <a href="{% url 'turnos:turnero_public' %}" class="nav-item" target="_blank">
+          <i class="fas fa-tablet-screen-button"></i>
+          <span>Tótem</span>
+          <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 0.8rem;"></i>
+        </a>
+      </div>
+      
+      {% if request.user.is_superuser or request.user.is_staff %}
+      <div class="nav-section">
+        <div class="nav-section-title">Administración</div>
+        <a href="/admin/" class="nav-item" target="_blank">
+          <i class="fas fa-cog"></i>
+          <span>Configuración</span>
+          <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 0.8rem;"></i>
+        </a>
+      </div>
+      {% endif %}
+    </nav>
+    
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-error">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Cerrar Sesión</span>
+        </button>
+      </form>
+    </div>
+  </aside>
+  
+  <!-- MAIN CONTENT -->
+  <main class="dashboard-main">
+    {% block content %}{% endblock %}
+  </main>
+</div>
 {% endblock %}

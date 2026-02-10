@@ -1,29 +1,209 @@
 {% extends "admin/base_admin.html" %}
 
 {% block content %}
-<div class="container">
-  <h1 class="mt-4">Panel de Administración</h1>
-  <p class="lead">Bienvenido, {{ request.user.first_name }}.</p>
+<!-- Header -->
+<div class="content-header">
+  <div class="breadcrumb">
+    <i class="fas fa-home"></i>
+    <span class="breadcrumb-separator">/</span>
+    <span>Dashboard</span>
+  </div>
+  <h1 class="content-title">Panel de Control</h1>
+  <p class="content-subtitle">Bienvenido, {{ request.user.get_full_name|default:request.user.username }}</p>
+</div>
 
-  <div class="card mt-4">
-    <div class="card-body">
-      <h5 class="card-title">Opciones del sistema</h5>
-      <ul class="list-group">
-        <li class="list-group-item">
-          <a href="{% url 'turnos:monitor' %}">Ver monitor de turnos</a>
-        </li>
-        <li class="list-group-item">
-          <a href="{% url 'turnos:turnero_public' %}">Totem (turnero público)</a>
-        </li>
-        <li class="list-group-item">
-        <form method="post" action="{% url 'logout' %}">
-  {% csrf_token %}
-  <button type="submit" class="btn btn-primary">Salir</button>
-</form>
-
-        </li>
-      </ul>
+<!-- Estadísticas -->
+<div class="dashboard-stats">
+  <!-- Card: Pendientes -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-icon">
+        <i class="fas fa-clock"></i>
+      </div>
+      <div class="stat-meta">
+        <div class="stat-label">Estado</div>
+        <div class="stat-trend up">
+          <i class="fas fa-arrow-up"></i>
+          <span>Activo</span>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card-body">
+      <div class="stat-value">{{ stats.pendientes }}</div>
+      <p class="stat-description">Turnos Pendientes</p>
     </div>
   </div>
+  
+  <!-- Card: En Atención -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-icon" style="background: rgba(76, 175, 80, 0.2); color: var(--color-success);">
+        <i class="fas fa-user-check"></i>
+      </div>
+      <div class="stat-meta">
+        <div class="stat-label">En Vivo</div>
+        <div class="stat-trend">
+          <i class="fas fa-circle" style="color: var(--color-success);"></i>
+          <span>Online</span>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card-body">
+      <div class="stat-value" style="color: var(--color-success);">{{ stats.en_atencion }}</div>
+      <p class="stat-description">En Atención Ahora</p>
+    </div>
+  </div>
+  
+  <!-- Card: Finalizados Hoy -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-icon" style="background: rgba(33, 150, 243, 0.2); color: var(--color-info);">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="stat-meta">
+        <div class="stat-label">Hoy</div>
+      </div>
+    </div>
+    <div class="stat-card-body">
+      <div class="stat-value" style="color: var(--color-info);">{{ stats.finalizados }}</div>
+      <p class="stat-description">Turnos Completados</p>
+    </div>
+  </div>
+  
+  <!-- Card: Total Sistema -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-icon" style="background: rgba(156, 39, 176, 0.2); color: #9c27b0;">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="stat-meta">
+        <div class="stat-label">Total</div>
+      </div>
+    </div>
+    <div class="stat-card-body">
+      <div class="stat-value" style="color: #9c27b0;">{{ stats.pendientes|add:stats.en_atencion|add:stats.finalizados }}</div>
+      <p class="stat-description">Turnos del Día</p>
+    </div>
+  </div>
+</div>
+
+<!-- Sección de Turnos Recientes -->
+<div class="turnos-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <i class="fas fa-list"></i>
+      Turnos Recientes
+    </h2>
+    <div class="section-actions">
+      <a href="{% url 'turnos:monitor' %}" class="btn btn-secondary" target="_blank">
+        <i class="fas fa-tv"></i>
+        Ver Monitor
+      </a>
+      <a href="{% url 'turnos:turnero_public' %}" class="btn btn-primary" target="_blank">
+        <i class="fas fa-plus"></i>
+        Nuevo Turno
+      </a>
+    </div>
+  </div>
+  
+  <div class="turnos-list">
+    {% comment %}
+    <!-- Ejemplo de turno - esto se poblará dinámicamente -->
+    <div class="turno-item">
+      <div class="turno-number">001</div>
+      <div class="turno-info">
+        <h4 class="turno-name">Juan Pérez</h4>
+        <div class="turno-details">
+          <span class="turno-detail-item">
+            <i class="fas fa-briefcase"></i>
+            Trámite General
+          </span>
+          <span class="turno-detail-item">
+            <i class="fas fa-clock"></i>
+            10:30 AM
+          </span>
+          <span class="turno-detail-item">
+            <i class="fas fa-building"></i>
+            Mesa 1
+          </span>
+        </div>
+      </div>
+      <div class="turno-estado en-atencion">
+        <i class="fas fa-user-check"></i>
+        En Atención
+      </div>
+    </div>
+    {% endcomment %}
+    
+    <!-- Empty State -->
+    <div class="empty-state">
+      <i class="fas fa-inbox"></i>
+      <h3>No hay turnos activos</h3>
+      <p>Los turnos aparecerán aquí cuando se emitan desde el tótem</p>
+      <a href="{% url 'turnos:turnero_public' %}" class="btn btn-primary" target="_blank">
+        <i class="fas fa-plus"></i>
+        Emitir Primer Turno
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Sección de Accesos Rápidos -->
+<div class="dashboard-stats" style="margin-top: var(--space-xl);">
+  <div class="glass-card">
+    <div class="glass-card-header">
+      <div class="glass-card-icon">
+        <i class="fas fa-tv"></i>
+      </div>
+      <h3 class="glass-card-title">Monitor Público</h3>
+    </div>
+    <div class="glass-card-body">
+      <p>Pantalla para sala de espera con estado de turnos en tiempo real</p>
+    </div>
+    <div class="glass-card-footer">
+      <a href="{% url 'turnos:monitor' %}" class="btn btn-secondary" target="_blank">
+        <i class="fas fa-external-link-alt"></i>
+        Abrir
+      </a>
+    </div>
+  </div>
+  
+  <div class="glass-card">
+    <div class="glass-card-header">
+      <div class="glass-card-icon" style="background: rgba(76, 175, 80, 0.2); color: var(--color-success);">
+        <i class="fas fa-tablet-screen-button"></i>
+      </div>
+      <h3 class="glass-card-title">Tótem Autoservicio</h3>
+    </div>
+    <div class="glass-card-body">
+      <p>Pantalla táctil para emisión de turnos por el público</p>
+    </div>
+    <div class="glass-card-footer">
+      <a href="{% url 'turnos:turnero_public' %}" class="btn btn-success" target="_blank">
+        <i class="fas fa-external-link-alt"></i>
+        Abrir
+      </a>
+    </div>
+  </div>
+  
+  {% if request.user.is_superuser or request.user.is_staff %}
+  <div class="glass-card">
+    <div class="glass-card-header">
+      <div class="glass-card-icon" style="background: rgba(255, 193, 7, 0.2); color: var(--color-warning);">
+        <i class="fas fa-cog"></i>
+      </div>
+      <h3 class="glass-card-title">Configuración</h3>
+    </div>
+    <div class="glass-card-body">
+      <p>Administración del sistema, usuarios, áreas y trámites</p>
+    </div>
+    <div class="glass-card-footer">
+      <a href="/admin/" class="btn btn-warning" target="_blank">
+        <i class="fas fa-external-link-alt"></i>
+        Abrir
+      </a>
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

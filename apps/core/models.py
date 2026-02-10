@@ -159,8 +159,22 @@ class Mesa(models.Model):
         Area, on_delete=models.DO_NOTHING,
         db_column="FkIdArea", related_name="mesas",
     )
-    nombre = models.CharField(max_length=20, db_column="Nombre")
-    activa = models.BooleanField(default=True, db_column="Activa")
+    nombre            = models.CharField(max_length=20, db_column="Nombre")
+    activa            = models.BooleanField(default=True, db_column="Activa")
+    operador_asignado = models.ForeignKey(
+        'Usuario', on_delete=models.SET_NULL,
+        null=True, blank=True,
+        db_column="FkIdOperadorAsignado", related_name="mesas_asignadas",
+    )
+    color = models.CharField(max_length=7, default="#FFFFFF", db_column="Color")
+    
+    # Relación many-to-many con Tramite (a través de MesaTramite)
+    tramites = models.ManyToManyField(
+        'Tramite',
+        through='MesaTramite',
+        related_name='mesas_habilitadas',
+        blank=True
+    )
 
     class Meta:
         managed  = False
@@ -170,6 +184,15 @@ class Mesa(models.Model):
 
     def __str__(self):
         return f"{self.area} - {self.nombre}"
+    
+    def puede_atender_tramite(self, tramite):
+        """
+        Verifica si la mesa puede atender un trámite específico.
+        Si no tiene trámites asignados, puede atender todos.
+        """
+        if not self.tramites.exists():
+            return True  # Sin restricción = atiende todos
+        return self.tramites.filter(id=tramite.id).exists()
 
 
 # -----------------------------------------------
@@ -192,6 +215,29 @@ class Tramite(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.area})"
+
+
+# -----------------------------------------------
+# 4.0 MesaTramite (relación many-to-many)
+# -----------------------------------------------
+class MesaTramite(models.Model):
+    id      = models.AutoField(primary_key=True, db_column="IdMesaTramite")
+    mesa    = models.ForeignKey(
+        Mesa, on_delete=models.CASCADE,
+        db_column="FkIdMesa", related_name="mesa_tramites"
+    )
+    tramite = models.ForeignKey(
+        Tramite, on_delete=models.CASCADE,
+        db_column="FkIdTramite", related_name="tramite_mesas"
+    )
+
+    class Meta:
+        managed  = False
+        db_table = "MesaTramite"
+        unique_together = ("mesa", "tramite")
+
+    def __str__(self):
+        return f"{self.mesa} → {self.tramite}"
 
 
 # -----------------------------------------------

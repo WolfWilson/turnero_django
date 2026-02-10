@@ -3,6 +3,10 @@
         "/^C:/Users/wbenitez/Downloads/Git/turnero_django/venv/Scripts/python\\.exe test_sqlserver_connection\\.py$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^C:/Users/wbenitez/Downloads/Git/turnero_django/venv/Scripts/python\\.exe manage\\.py check$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

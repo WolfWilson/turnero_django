@@ -9,6 +9,7 @@ from .models import (
     AreaUsuario,
     Persona,
     Mesa,
+    MesaTramite,
     Tramite,
     TramiteOperador,
     EstadoTicket,
@@ -30,6 +31,13 @@ class UsuarioRolInline(admin.TabularInline):
 class TramiteOperadorInline(admin.TabularInline):
     model = TramiteOperador
     extra = 1
+
+
+class MesaTramiteInline(admin.TabularInline):
+    model = MesaTramite
+    extra = 1
+    verbose_name = "Trámite habilitado"
+    verbose_name_plural = "Trámites habilitados en esta mesa (máx 3, vacío = todos)"
 
 
 # ───────────────────────────────
@@ -97,10 +105,17 @@ class TramiteAdmin(admin.ModelAdmin):
 # ───────────────────────────────
 @admin.register(Mesa)
 class MesaAdmin(admin.ModelAdmin):
-    list_display  = ("nombre", "area", "activa")
-    list_filter   = ("area", "activa")
+    list_display  = ("nombre", "area", "operador_asignado", "color_preview", "activa")
+    list_filter   = ("area", "activa", "operador_asignado")
     list_editable = ("activa",)
     search_fields = ("nombre",)
+    fields        = ("area", "nombre", "operador_asignado", "color", "activa")
+    inlines       = [MesaTramiteInline]
+    
+    def color_preview(self, obj):
+        return f'<span style="display:inline-block;width:20px;height:20px;background:{obj.color};border:1px solid #ccc;"></span> {obj.color}'
+    color_preview.short_description = "Color"
+    color_preview.allow_tags = True
 
 
 # ───────────────────────────────
