@@ -1,27 +1,37 @@
 ﻿from datetime import date
-import json
-from pathlib import Path
-
 from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
 from .models import Area, Tramite, Mesa, Persona, Ticket, Turno, EstadoTicket, EstadoTurno
-
-# --- "SP" ficticio ---
-_JSON_PATH = Path(__file__).resolve().parent / "fixtures" / "personas.json"
-
-try:
-    with _JSON_PATH.open(encoding="utf8") as f:
-        _PERSONAS_FAKE = {p["dni"]: p for p in json.load(f)}
-except FileNotFoundError:
-    _PERSONAS_FAKE = {}
-except json.JSONDecodeError as e:
-    raise RuntimeError(f"personas.json mal formado: {e}") from e
+from .services_aportes import buscar_persona_por_dni as buscar_en_aportes
 
 
 def buscar_persona_por_dni(dni: int) -> dict | None:
-    return _PERSONAS_FAKE.get(dni)
+    """
+    Busca persona en base de datos Aportes (SQL Server sql01).
+    
+    Returns:
+        dict con keys: 'nombre', 'apellido', 'fecha_nacimiento' (opcional)
+        o None si no encuentra
+    """
+    # Convertir DNI a string de 8 dígitos
+    dni_str = str(dni).zfill(8) if isinstance(dni, int) else str(dni)
+    resultado = buscar_en_aportes(dni_str)
+    
+    if not resultado:
+        return None
+    
+    # Convertir formato de Aportes a formato esperado
+    apeynom = resultado['apeynom'].strip()
+    partes = apeynom.split(',', 1)
+    
+    return {
+        'nombre': partes[1].strip() if len(partes) > 1 else '',
+        'apellido': partes[0].strip() if partes else apeynom,
+        'fecha_nacimiento': resultado.get('fecha_nac'),
+        'sexo': resultado.get('sexo'),
+    }
 
 
 # --- Servicio central ---

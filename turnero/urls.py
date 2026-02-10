@@ -24,7 +24,7 @@ urlpatterns = [
     path("turnos/", include("apps.turnos.urls")),
 
     # zonas privadas
-    path("mesa/",      include("apps.atencion.urls")),
+    path("atencion/", include("apps.atencion.urls")),
     path("dashboard/", include("apps.administracion.urls")),
 
     path("api/", include("api.urls")),

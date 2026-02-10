@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(({ok,data})=>{
         if(!ok) return Promise.reject(data.detail || "Error");
         personaNombre = `${data.apellido}, ${data.nombre}`;
-        return fetch("/turnos/categorias.json").then(r=>r.json());
+        return fetch("/turnos/tramites.json").then(r=>r.json());
     })
     .then(renderCategorias)
     .then(()=>show("#pantalla-cat"))
@@ -58,12 +58,12 @@ document.addEventListener("DOMContentLoaded", () => {
     fetch("/api/turnos/emitir/",{
       method:"POST",
       headers:{"Content-Type":"application/json","X-CSRFToken":csrftoken},
-      body:JSON.stringify({categoria_id:catId,dni:parseInt(dniInput.value,10)})
+      body:JSON.stringify({tramite_id:catId,dni:parseInt(dniInput.value,10)})
     })
     .then(r=>r.json().then(d=>({ok:r.ok,data:d})))
     .then(({ok,data})=>{
         if(!ok) return Promise.reject(data.detail||"Error");
-        mostrarPantallaOK(data.nombre,data.categoria,data.espera,15);
+        mostrarPantallaOK(data.nombre,data.tramite,data.espera,15);
         show("#pantalla-ok");
     })
     .catch(err=>showAlert(err,"warning"));

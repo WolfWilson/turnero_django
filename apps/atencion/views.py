@@ -5,6 +5,10 @@ from apps.core.models import Usuario, UsuarioRol, Turno, Mesa
 
 
 def es_operador(user):
+    # Superusers siempre tienen acceso
+    if user.is_superuser:
+        return True
+    
     try:
         usuario = Usuario.objects.get(username=user.username)
         return UsuarioRol.objects.filter(

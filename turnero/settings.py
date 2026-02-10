@@ -106,6 +106,17 @@ DATABASES = {
             'driver': env('DB_DRIVER'),
             'extra_params': 'TrustServerCertificate=yes',
         },
+    },
+    # Base de datos Aportes para búsqueda de personas
+    'aportes': {
+        'ENGINE': 'mssql',
+        'NAME': 'Aportes',
+        'HOST': env('APORTES_DB_HOST'),
+        'PORT': '',
+        'OPTIONS': {
+            'driver': env('DB_DRIVER'),
+            'extra_params': 'TrustServerCertificate=yes;Trusted_Connection=yes',
+        },
     }
 }
 
