@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const dniAlert  = $("#dni-alert");
 
   let countdownId = null;
+  let personaData = {}; // Guardar datos completos de la persona
 
   /* helpers */
   const show      = id => { document.querySelectorAll(".pantalla").forEach(p=>p.classList.remove("activa")); $(id).classList.add("activa"); };
@@ -24,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   $("#back").onclick  = () => { dniInput.value = dniInput.value.slice(0,-1); toggleOk(); };
   $("#clear").onclick = () => { dniInput.value = ""; toggleOk(); dniAlert.classList.add("d-none"); };
-  const toggleOk      = () => $("#dni-ok").disabled = dniInput.value.length !== 8;
+  const toggleOk      = () => $("#dni-ok").disabled = dniInput.value.length < 7; // 7 o 8 caracteres
 
   /* confirmar DNI */
   $("#dni-ok").onclick = () => {
@@ -36,13 +37,33 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(r=>r.json().then(d=>({ok:r.ok, data:d})))
     .then(({ok,data})=>{
         if(!ok) return Promise.reject(data.detail || "Error");
-        personaNombre = `${data.apellido}, ${data.nombre}`;
+        personaData = {
+          dni: dniInput.value,
+          nombre: data.nombre,
+          apellido: data.apellido,
+          nombreCompleto: `${data.apellido}, ${data.nombre}`,
+          fechaNac: data.fecha_nacimiento || '',
+          sexo: data.sexo || ''
+        };
+        mostrarDatosPersona();
         return fetch("/turnos/tramites.json").then(r=>r.json());
     })
     .then(renderCategorias)
     .then(()=>show("#pantalla-cat"))
     .catch(err=>showAlert(err,"warning"));
   };
+
+  /* mostrar datos de la persona */
+  function mostrarDatosPersona(){
+    $("#persona-nombre").textContent = personaData.nombreCompleto;
+    $("#persona-dni").textContent = personaData.dni;
+    if(personaData.fechaNac){
+      $("#persona-fechanac").textContent = new Date(personaData.fechaNac).toLocaleDateString('es-AR');
+    }
+    if(personaData.sexo){
+      $("#persona-sexo").textContent = personaData.sexo === 'M' ? 'Masculino' : 'Femenino';
+    }
+  }
 
   /* categorías */
   function renderCategorias(lista){
@@ -58,12 +79,12 @@ document.addEventListener("DOMContentLoaded", () => {
     fetch("/api/turnos/emitir/",{
       method:"POST",
       headers:{"Content-Type":"application/json","X-CSRFToken":csrftoken},
-      body:JSON.stringify({tramite_id:catId,dni:parseInt(dniInput.value,10)})
+      body:JSON.stringify({tramite_id:catId,dni:parseInt(personaData.dni,10)})
     })
     .then(r=>r.json().then(d=>({ok:r.ok,data:d})))
     .then(({ok,data})=>{
         if(!ok) return Promise.reject(data.detail||"Error");
-        mostrarPantallaOK(data.nombre,data.tramite,data.espera,15);
+        mostrarPantallaOK(personaData.nombreCompleto,catNombre,data.espera,15);
         show("#pantalla-ok");
     })
     .catch(err=>showAlert(err,"warning"));

@@ -33,8 +33,8 @@ body{
 
 .pantalla {
   display: none;
-  height: 100%;
-  overflow: hidden;   /* ← evita barras internas */
+  height: 100vh;
+  overflow: hidden;
 }
 
 .pantalla.activa {
@@ -46,7 +46,7 @@ body{
 
 /* centrado vertical en pantalla 1 */
 #pantalla-dni .vcenter-inner{
-  min-height:100vh;
+  min-height: auto;
   display:flex;
   flex-direction:column;
   justify-content:center;
@@ -71,9 +71,7 @@ body{
   border-radius: 1.2rem;
   font-size: 2.8rem;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
   user-select: none;
   border: 2px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.15);
@@ -82,6 +80,27 @@ body{
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   transition: all 0.12s ease-in-out;
   color: #fff;
+}
+
+/* Centrar números usando ::after en todos los tamaños */
+.key[data-num]::after {
+  content: attr(data-num);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.8rem;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Centrar iconos */
+.key span.material-symbols-rounded {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .key:active {
@@ -328,4 +347,438 @@ body{
   z-index: 9999;
   pointer-events: none;
   opacity: 0.8;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE DESIGN - MOBILE & TABLET
+   ═══════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────
+   TABLET (768px - 1024px)
+   ───────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  :root {
+    --size-btn: 110px;
+    --gap-btn: 12px;
+  }
+  
+  #pantalla-dni h2 {
+    font-size: clamp(1.8rem, 4.5vw, 3rem);
+    padding: 0 1rem;
+  }
+  
+  #dni-input {
+    max-width: 360px;
+    height: 80px;
+    font-size: 2.2rem;
+  }
+  
+  .key {
+    width: clamp(65px, 8vw, 90px);
+    height: clamp(65px, 8vw, 90px);
+    font-size: 2.4rem;
+  }
+  
+  .key span.material-symbols-rounded {
+    font-size: 2.4rem;
+  }
+  
+  .categoria-btn {
+    min-width: 280px;
+    height: 80px;
+    font-size: 1.6rem;
+    margin: 0.75rem auto;
+  }
+  
+  #ok-nombre {
+    font-size: clamp(2rem, 5vw, 3.6rem);
+  }
+  
+  .banner-ok {
+    max-width: 620px;
+    padding: 1rem 0.9rem 0.8rem;
+  }
+  
+  .btn-wide {
+    width: 240px;
+    height: 75px;
+    font-size: 1.3rem;
+  }
+  
+  .btn-modern {
+    padding: 1rem 2rem;
+    font-size: 1.6rem;
+  }
+  
+  .persona-datos {
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   MOBILE (hasta 768px)
+   ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  :root {
+    --size-btn: 90px;
+    --gap-btn: 10px;
+    --br: 10px;
+  }
+  
+  body {
+    font-size: 14px;
+  }
+  
+  .pantalla.activa {
+    padding: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  #pantalla-dni .vcenter-inner {
+    min-height: 100vh;
+    padding: 1rem 0.75rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+  }
+  
+  #pantalla-dni h2 {
+    font-size: clamp(1.1rem, 3.8vw, 1.85rem);
+    padding: 0 0.75rem;
+    margin-bottom: 0.85rem !important;
+    margin-top: 0.5rem;
+    line-height: 1.25;
+  }
+  
+  #dni-input {
+    max-width: 100%;
+    width: 90%;
+    height: 58px;
+    font-size: 1.65rem;
+    margin-bottom: 0.85rem;
+    margin-top: 0.25rem;
+  }
+  
+  #teclado {
+    width: 100%;
+    max-width: 280px;
+    margin: 0.5rem auto 0.85rem;
+  }
+  
+  #teclado .d-grid {
+    gap: 9px;
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+    margin-bottom: 0;
+  }
+  
+  .key {
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%; /* cuadrado perfecto */
+    border-radius: 0.85rem;
+  }
+  
+  .key[data-num]::after {
+    font-size: 1.75rem;
+  }
+  
+  .key span.material-symbols-rounded {
+    font-size: 1.75rem;
+  }
+  
+  .btn-modern {
+    padding: 0.8rem 1.6rem;
+    font-size: 1.25rem;
+    width: 90%;
+    max-width: 280px;
+    margin-top: 0.85rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .icono-btn {
+    font-size: 1.5rem;
+  }
+  
+  #dni-alert {
+    font-size: 0.95rem;
+    max-width: 90%;
+    margin-bottom: 1rem;
+  }
+  
+  /* Pantalla de categorías/trámites */
+  #pantalla-cat {
+    padding: 1rem 0.75rem;
+  }
+  
+  #pantalla-cat h2 {
+    font-size: clamp(1.6rem, 4.5vw, 2.4rem);
+    margin-bottom: 1.25rem;
+    padding: 0 0.5rem;
+  }
+  
+  .persona-datos {
+    max-width: 95%;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .persona-datos h4 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .dato-item {
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.5rem 0;
+  }
+  
+  .dato-label {
+    font-size: 0.8rem;
+    opacity: 0.8;
+  }
+  
+  .dato-valor {
+    font-size: 0.95rem;
+  }
+  
+  .categoria-btn {
+    min-width: auto;
+    width: 95%;
+    max-width: 380px;
+    height: 68px;
+    font-size: 1.25rem;
+    margin: 0.65rem auto;
+    padding: 0 1rem;
+  }
+  
+  #cat-back {
+    bottom: 1.25rem;
+    width: 90%;
+    max-width: 340px;
+  }
+  
+  /* Pantalla OK */
+  #ok-nombre {
+    font-size: clamp(1.7rem, 5.5vw, 2.8rem);
+    margin-bottom: 1.25rem;
+    padding: 0 0.75rem;
+  }
+  
+  .banner-ok {
+    max-width: 95%;
+    padding: 1rem 0.9rem;
+    margin-bottom: 1.75rem;
+  }
+  
+  .banner-ok .txt-superior {
+    font-size: clamp(1rem, 3.8vw, 1.5rem);
+  }
+  
+  .banner-ok #ok-cat {
+    font-size: clamp(1.3rem, 4.2vw, 2rem);
+  }
+  
+  #ok-espera {
+    font-size: clamp(1.1rem, 3.8vw, 1.7rem);
+    margin: 1.75rem 0 2rem;
+    padding: 0 0.75rem;
+  }
+  
+  .countdown-text {
+    font-size: 0.95rem;
+  }
+  
+  .btn-wide {
+    width: 90%;
+    max-width: 340px;
+    height: 62px;
+    font-size: 1.2rem;
+    margin: 0.6rem auto;
+  }
+  
+  #mensaje-final {
+    font-size: clamp(1.5rem, 4.8vw, 2.2rem);
+    margin-top: 1.75rem;
+    padding: 0 0.75rem;
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   MOBILE PEQUEÑO (hasta 480px)
+   ───────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  :root {
+    --size-btn: 75px;
+    --gap-btn: 8px;
+  }
+  
+  #pantalla-dni .vcenter-inner {
+    padding: 0.75rem 0.5rem 1.25rem;
+  }
+  
+  #pantalla-dni h2 {
+    font-size: 1.05rem;
+    padding: 0 0.6rem;
+    margin-bottom: 0.75rem !important;
+    margin-top: 0.25rem;
+  }
+  
+  #dni-input {
+    height: 52px;
+    font-size: 1.45rem;
+    width: 95%;
+    margin-bottom: 0.75rem;
+    margin-top: 0;
+  }
+  
+  #teclado {
+    max-width: 250px;
+    margin: 0.4rem auto 0.75rem;
+  }
+  
+  #teclado .d-grid {
+    max-width: 100%;
+    gap: 7px;
+  }
+  
+  .key {
+    font-size: 1.5rem;
+    border-radius: 0.7rem;
+  }
+  
+  .key[data-num]::after {
+    font-size: 1.5rem;
+  }
+  
+  .key span.material-symbols-rounded {
+    font-size: 1.5rem;
+  }
+  
+  .btn-modern {
+    padding: 0.75rem 1.3rem;
+    font-size: 1.15rem;
+    max-width: 250px;
+    margin-top: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .categoria-btn {
+    height: 62px;
+    font-size: 1.15rem;
+    padding: 0 0.9rem;
+    max-width: 320px;
+  }
+  
+  .btn-wide {
+    height: 58px;
+    font-size: 1.1rem;
+    max-width: 300px;
+  }
+  
+  #ok-nome {
+    font-size: 1.5rem;
+  }
+  
+  .banner-ok {
+    padding: 0.85rem 0.7rem;
+  }
+  
+  .persona-datos {
+    padding: 0.85rem;
+  }
+  
+  .persona-datos h4 {
+    font-size: 0.95rem;
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   LANDSCAPE MODE (móviles horizontales)
+   ───────────────────────────────────────────────── */
+@media (max-height: 600px) and (orientation: landscape) {
+  body {
+    overflow-y: auto;
+  }
+  
+  .pantalla.activa {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  #pantalla-dni .vcenter-inner {
+    min-height: auto;
+    padding: 0.5rem 0.5rem 1rem;
+    justify-content: flex-start;
+  }
+  
+  #pantalla-dni h2 {
+    font-size: 1.15rem;
+    margin-bottom: 0.6rem !important;
+    margin-top: 0.25rem;
+    line-height: 1.2;
+  }
+  
+  #dni-input {
+    height: 50px;
+    font-size: 1.4rem;
+    margin-bottom: 0.6rem;
+    margin-top: 0;
+  }
+  
+  #teclado {
+    max-width: 300px;
+    margin: 0.35rem auto 0.6rem;
+  }
+  
+  #teclado .d-grid {
+    gap: 7px;
+    margin-bottom: 0;
+  }
+  
+  .key {
+    font-size: 1.45rem;
+  }
+  
+  .key span.material-symbols-rounded {
+    font-size: 1.45rem;
+  }
+  
+  .btn-modern {
+    padding: 0.6rem 1.4rem;
+    font-size: 1.15rem;
+    margin-top: 0.6rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .categoria-btn {
+    height: 56px;
+    margin: 0.4rem auto;
+    font-size: 1.15rem;
+  }
+  
+  .banner-ok {
+    margin-bottom: 0.75rem;
+    padding: 0.8rem;
+  }
+  
+  #ok-espera {
+    margin: 1rem 0 1.25rem;
+  }
+  
+  .btn-wide {
+    height: 54px;
+    font-size: 1.1rem;
+  }
+  
+  #cat-back {
+    bottom: 0.75rem;
+  }
 }

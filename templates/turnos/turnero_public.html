@@ -3,6 +3,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Turnos – Terminal Pública</title>
 
   <!-- Bootstrap (slim) -->
@@ -11,9 +12,62 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:wght@400;700" rel="stylesheet">
   <!-- Iconos de Material Icons -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
+  <!-- Google Fonts - Montserrat -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
 
   <!-- CSS separado -->
   <link rel="stylesheet" href="{% static 'css/turnero.css' %}">
+  
+  <style>
+    body, h1, h2, h3, h4, h5, h6, p, button, label, span {
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    /* Mantener fuente monospace para números */
+    .numero, #dni-input, .turno-numero, #count-num {
+      font-family: 'Courier New', Consolas, monospace;
+    }
+    /* Fuente original del sistema para títulos específicos */
+    .titulo-original {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    }
+    
+    /* Datos de la persona en pantalla de trámites */
+    .persona-datos {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .persona-datos h4 {
+      color: #1a1a2e;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+    }
+    .dato-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+    .dato-item:last-child {
+      border-bottom: none;
+    }
+    .dato-label {
+      font-weight: 600;
+      color: #555;
+    }
+    .dato-valor {
+      font-weight: 400;
+      color: #1a1a2e;
+    }
+    .dato-valor.numero {
+      font-family: 'Courier New', Consolas, monospace;
+    }
+  </style>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
   <script defer src="{% static 'js/turnero_spa.js' %}"></script>
@@ -24,7 +78,7 @@
 <section id="pantalla-dni" class="pantalla activa container py-5">
   <div class="vcenter-inner">
 
-    <h2 class="mb-4">
+    <h2 class="mb-4 titulo-original">
       Para gestionar su turno<br>
       Ingrese el DNI del titular del trámite o consulta
     </h2>
@@ -42,10 +96,10 @@
     <div id="teclado" class="d-flex flex-column align-items-center">
       <div class="d-grid mb-4">
         {% for n in "123456789" %}
-          <button class="btn key num" data-num="{{ n }}">{{ n }}</button>
+          <button class="btn key num" data-num="{{ n }}"></button>
         {% endfor %}
         <button class="btn key func" id="clear"><span class="material-symbols-rounded">close</span></button>
-        <button class="btn key num" data-num="0">0</button>
+        <button class="btn key num" data-num="0"></button>
         <button class="btn key back" id="back"><span class="material-symbols-rounded">backspace</span></button>
       </div>
     </div>
@@ -70,6 +124,27 @@
 
 <!-- ───────────── PANTALLA 2 · CATEGORÍAS ───────────── -->
 <section id="pantalla-cat" class="pantalla container py-5">
+  <!-- Datos de la persona -->
+  <div class="persona-datos">
+    <h4>Datos del Afiliado</h4>
+    <div class="dato-item">
+      <span class="dato-label">Nombre:</span>
+      <span class="dato-valor" id="persona-nombre">-</span>
+    </div>
+    <div class="dato-item">
+      <span class="dato-label">DNI:</span>
+      <span class="dato-valor numero" id="persona-dni">-</span>
+    </div>
+    <div class="dato-item">
+      <span class="dato-label">Fecha de Nacimiento:</span>
+      <span class="dato-valor" id="persona-fechanac">-</span>
+    </div>
+    <div class="dato-item">
+      <span class="dato-label">Sexo:</span>
+      <span class="dato-valor" id="persona-sexo">-</span>
+    </div>
+  </div>
+  
   <h2 class="mb-4">Seleccione el motivo de su trámite</h2>
   <div id="cat-container" class="row gy-3"></div>
   <button id="cat-back" class="btn-modern btn-amarillo">Volver</button>
