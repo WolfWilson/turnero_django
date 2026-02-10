@@ -1,16 +1,71 @@
-{% extends "base_private.html" %}
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/operador.css' %}">
+{% endblock %}
+
 {% block body %}
-  <nav class="flex" style="background:var(--bg-dark);padding:var(--space-2);">
-    <span>Mesa de atención</span>
-    <span style="margin-left:auto">{{ request.user.username }}</span>
-   <form method="post" action="{% url 'logout' %}">
-  {% csrf_token %}
-  <button type="submit" class="btn btn-primary">Salir</button>
-</form>
-
-
-  </nav>
-  <main class="container" style="padding-top:var(--space-3);">
+<div class="operador-layout">
+  <!-- SIDEBAR -->
+  <aside class="dashboard-sidebar">
+    <!-- Header -->
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <i class="fas fa-headset"></i>
+      </div>
+      <h2 class="sidebar-title">OPERADOR</h2>
+      <p class="sidebar-subtitle">Panel de Atención</p>
+    </div>
+    
+    <!-- User Info -->
+    <div class="sidebar-user">
+      <div class="user-avatar">
+        {{ request.user.first_name|slice:":1"|upper }}{{ request.user.last_name|slice:":1"|upper }}
+      </div>
+      <div class="user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+      <div class="user-role">
+        <i class="fas fa-user-check"></i>
+        Operador
+      </div>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Atención</div>
+        <a href="{% url 'atencion:panel' %}" class="nav-item active">
+          <i class="fas fa-desktop"></i>
+          <span>Mi Mesa</span>
+        </a>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">Visualización</div>
+        <a href="{% url 'turnos:monitor' %}" class="nav-item" target="_blank">
+          <i class="fas fa-tv"></i>
+          <span>Monitor Público</span>
+          <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 0.8rem;"></i>
+        </a>
+      </div>
+    </nav>
+    
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-error">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Cerrar Sesión</span>
+        </button>
+      </form>
+    </div>
+  </aside>
+  
+  <!-- MAIN CONTENT -->
+  <main class="operador-main">
     {% block content %}{% endblock %}
   </main>
+</div>
 {% endblock %}

@@ -1,11 +1,196 @@
 {% extends "operador/base_operator.html" %}
-{% block title %}Panel de Operador{% endblock %}
-{% block content %}
-  <h2>Bienvenido, {{ request.user.first_name }}</h2>
-  <p>Esta pantalla mostrará tu próximo turno.</p>
+{% load static %}
 
-  <section class="flex-col">
-    <button class="btn btn-primary" style="width:200px;">Play / Llamar</button>
-    <button class="btn btn-secondary" style="width:200px;">Finalizar</button>
-  </section>
+{% block title %}Panel de Atención - Operador{% endblock %}
+
+{% block content %}
+<!-- TURNO EN LLAMADA / ATENCIÓN -->
+{% if turno_actual %}
+<div class="turno-llamada-card">
+  <div class="turno-llamada-header">
+    <div class="turno-llamada-icon">
+      <i class="fas fa-bell"></i>
+    </div>
+    <div class="turno-llamada-title">
+      <h2>Turno en {{ turno_actual.estado.nombre }}</h2>
+      <p class="turno-llamada-subtitle">Atendiendo ahora</p>
+    </div>
+  </div>
+  
+  <div class="turno-llamada-info">
+    <div class="turno-info-item">
+      <div class="turno-info-label">Persona</div>
+      <div class="turno-info-value">
+        <i class="fas fa-user"></i>
+        {{ turno_actual.ticket.persona.apellido|upper }}, {{ turno_actual.ticket.persona.nombre|title }}
+      </div>
+    </div>
+    
+    <div class="turno-info-item">
+      <div class="turno-info-label">DNI</div>
+      <div class="turno-info-value">
+        <i class="fas fa-id-card"></i>
+        {{ turno_actual.ticket.persona.dni }}
+      </div>
+    </div>
+    
+    <div class="turno-info-item">
+      <div class="turno-info-label">Trámite</div>
+      <div class="turno-info-value">
+        <i class="fas fa-briefcase"></i>
+        {{ turno_actual.tramite.nombre }}
+      </div>
+    </div>
+    
+    <div class="turno-info-item">
+      <div class="turno-info-label">Hora</div>
+      <div class="turno-info-value">
+        <i class="fas fa-clock"></i>
+        {{ turno_actual.fecha_hora_creacion|date:"H:i" }}
+      </div>
+    </div>
+  </div>
+  
+  <div class="turno-llamada-acciones">
+    <div class="turno-espera-badge">
+      <div class="espera-numero">{{ total_espera }}</div>
+      <div class="espera-label">En Espera</div>
+    </div>
+    
+    {% if turno_actual.estado_id == 1 %}
+    <!-- Estado: LLAMANDO -->
+    <button class="btn-operador btn-operador-llamar" onclick="llamarTurno({{ turno_actual.id }})">
+      <i class="fas fa-bell"></i>
+      <span>Llamar</span>
+    </button>
+    
+    <button class="btn-operador btn-operador-iniciar" onclick="iniciarAtencion({{ turno_actual.id }})">
+      <i class="fas fa-play"></i>
+      <span>Iniciar Atención</span>
+    </button>
+    {% else %}
+    <!-- Estado: EN_ATENCION -->
+    <button class="btn-operador btn-operador-iniciar" onclick="finalizarAtencion({{ turno_actual.id }})" style="background: rgba(76, 175, 80, 0.95); grid-column: 2 / 4;">
+      <i class="fas fa-check"></i>
+      <span>Finalizar Atención</span>
+    </button>
+    {% endif %}
+    
+    <button class="btn-operador btn-operador-proximo" onclick="proximoTurno()">
+      <i class="fas fa-forward"></i>
+      <span>Próximo</span>
+    </button>
+  </div>
+</div>
+{% else %}
+<!-- NO HAY TURNO ACTIVO -->
+<div class="turno-llamada-card" style="background: linear-gradient(135deg, rgba(33, 150, 243, 0.95) 0%, rgba(25, 118, 210, 0.9) 100%);">
+  <div class="turno-llamada-header">
+    <div class="turno-llamada-icon">
+      <i class="fas fa-coffee"></i>
+    </div>
+    <div class="turno-llamada-title">
+      <h2>Sin turno asignado</h2>
+      <p class="turno-llamada-subtitle">Listo para atender</p>
+    </div>
+  </div>
+  
+  <div class="turno-llamada-acciones" style="grid-template-columns: auto 1fr;">
+    <div class="turno-espera-badge">
+      <div class="espera-numero">{{ total_espera }}</div>
+      <div class="espera-label">En Espera</div>
+    </div>
+    
+    {% if total_espera > 0 %}
+    <button class="btn-operador btn-operador-proximo" onclick="proximoTurno()" style="padding: var(--space-lg);">
+      <i class="fas fa-play-circle" style="font-size: 2rem;"></i>
+      <span style="font-size: 1.125rem;">Llamar Próximo Turno</span>
+    </button>
+    {% else %}
+    <div style="text-align: center; padding: var(--space-lg); color: rgba(255, 255, 255, 0.8);">
+      <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: var(--space-sm);"></i>
+      <p style="margin: 0; font-size: 1.125rem;">No hay turnos pendientes</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- LISTA DE TURNOS EN ESPERA -->
+<div class="turnos-espera-section">
+  <div class="turnos-espera-header">
+    <h2 class="turnos-espera-title">
+      <i class="fas fa-list"></i>
+      Turnos en Espera
+    </h2>
+    <span class="turnos-espera-count">{{ turnos_pendientes|length }} turnos</span>
+  </div>
+  
+  {% if turnos_pendientes %}
+  <table class="turnos-table">
+    <thead>
+      <tr>
+        <th>N°</th>
+        <th>Nombre</th>
+        <th>DNI</th>
+        <th>Trámite</th>
+        <th>Hora</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for turno in turnos_pendientes %}
+      <tr onclick="seleccionarTurno({{ turno.id }})">
+        <td class="turno-numero-cell">{{ turno.numero_visible|stringformat:"03d" }}</td>
+        <td class="turno-nombre-cell">
+          {{ turno.ticket.persona.apellido|upper }}, {{ turno.ticket.persona.nombre|title }}
+        </td>
+        <td class="turno-dni-cell">{{ turno.ticket.persona.dni }}</td>
+        <td class="turno-tramite-cell">{{ turno.tramite.nombre }}</td>
+        <td class="turno-hora-cell">{{ turno.fecha_hora_creacion|date:"H:i" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="turnos-empty-state">
+    <i class="fas fa-inbox"></i>
+    <h3>No hay turnos en espera</h3>
+    <p>Todos los turnos han sido atendidos</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function llamarTurno(turnoId) {
+  // TODO: Implementar llamada al turno (actualizar estado, emitir sonido/notificación)
+  console.log('Llamar turno:', turnoId);
+  alert('Función en desarrollo: Llamar turno #' + turnoId);
+}
+
+function iniciarAtencion(turnoId) {
+  // TODO: Implementar inicio de atención (cambiar estado a EN_ATENCION)
+  console.log('Iniciar atención:', turnoId);
+  alert('Función en desarrollo: Iniciar atención turno #' + turnoId);
+}
+
+function finalizarAtencion(turnoId) {
+  // TODO: Implementar finalización (modal para motivo, cambiar estado a FINALIZADO)
+  console.log('Finalizar atención:', turnoId);
+  alert('Función en desarrollo: Finalizar atención turno #' + turnoId);
+}
+
+function proximoTurno() {
+  // TODO: Tomar siguiente turno pendiente y asignarlo al operador
+  console.log('Obtener próximo turno');
+  alert('Función en desarrollo: Obtener próximo turno');
+}
+
+function seleccionarTurno(turnoId) {
+  // TODO: Permitir seleccionar un turno específico de la lista
+  console.log('Seleccionar turno:', turnoId);
+}
+
+// Auto-refresh cada 10 segundos
+setTimeout(() => location.reload(), 10000);
+</script>
 {% endblock %}

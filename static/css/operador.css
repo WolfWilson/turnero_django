@@ -1,0 +1,388 @@
+/* =====================================================
+   PANEL DE OPERADOR - Gestión de Turnos
+   Estilo: Glass Morphism siguiendo dashboard.css
+   ===================================================== */
+
+/* ─────────────────────────────────────────────────────
+   LAYOUT PRINCIPAL
+   ───────────────────────────────────────────────────── */
+.operador-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-mid) 50%, var(--bg-gradient-end) 100%);
+}
+
+.operador-main {
+  padding: var(--space-xl);
+  overflow-y: auto;
+}
+
+/* ─────────────────────────────────────────────────────
+   TURNO EN LLAMADA (Card destacado superior)
+   ───────────────────────────────────────────────────── */
+.turno-llamada-card {
+  background: linear-gradient(135deg, rgba(255, 87, 34, 0.95) 0%, rgba(244, 67, 54, 0.9) 100%);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: slideUp 0.3s ease-out;
+}
+
+.turno-llamada-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.turno-llamada-icon {
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  color: var(--text-primary);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+}
+
+.turno-llamada-title {
+  flex: 1;
+}
+
+.turno-llamada-title h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-xs) 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.turno-llamada-subtitle {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+/* Info del turno en llamada */
+.turno-llamada-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.turno-info-item {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.turno-info-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-xs);
+  font-weight: 600;
+}
+
+.turno-info-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.turno-info-value i {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+/* Acciones del turno en llamada */
+.turno-llamada-acciones {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr 1fr;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.turno-espera-badge {
+  background: rgba(255, 255, 255, 0.95);
+  color: #d32f2f;
+  font-size: 2rem;
+  font-weight: 700;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  box-shadow: var(--shadow-md);
+}
+
+.turno-espera-badge .espera-numero {
+  font-size: 2.5rem;
+  line-height: 1;
+  margin-bottom: var(--space-xs);
+}
+
+.turno-espera-badge .espera-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-operador {
+  padding: var(--space-md) var(--space-lg);
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  transition: all var(--transition-normal);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-operador i {
+  font-size: 1.5rem;
+}
+
+.btn-operador-llamar {
+  background: rgba(255, 193, 7, 0.95);
+  color: #000;
+}
+
+.btn-operador-llamar:hover {
+  background: rgba(255, 193, 7, 1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-operador-iniciar {
+  background: rgba(76, 175, 80, 0.95);
+  color: var(--text-primary);
+}
+
+.btn-operador-iniciar:hover {
+  background: rgba(76, 175, 80, 1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-operador-proximo {
+  background: rgba(33, 150, 243, 0.95);
+  color: var(--text-primary);
+}
+
+.btn-operador-proximo:hover {
+  background: rgba(33, 150, 243, 1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ─────────────────────────────────────────────────────
+   LISTA DE TURNOS EN ESPERA
+   ───────────────────────────────────────────────────── */
+.turnos-espera-section {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.turnos-espera-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.turnos-espera-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.turnos-espera-title i {
+  color: var(--color-primary);
+}
+
+.turnos-espera-count {
+  background: var(--color-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+}
+
+/* Tabla de turnos */
+.turnos-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 var(--space-sm);
+}
+
+.turnos-table thead th {
+  text-align: left;
+  padding: var(--space-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.turnos-table tbody tr {
+  background: rgba(255, 255, 255, 0.05);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+}
+
+.turnos-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(4px);
+}
+
+.turnos-table tbody td {
+  padding: var(--space-md);
+  color: var(--text-primary);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.turnos-table tbody tr td:first-child {
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  border-top-left-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+}
+
+.turnos-table tbody tr td:last-child {
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
+.turno-numero-cell {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--color-primary);
+}
+
+.turno-nombre-cell {
+  font-weight: 600;
+}
+
+.turno-dni-cell {
+  font-family: 'Courier New', monospace;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.turno-tramite-cell {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.turno-hora-cell {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Estado vacío */
+.turnos-empty-state {
+  text-align: center;
+  padding: var(--space-xxl) var(--space-xl);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.turnos-empty-state i {
+  font-size: 4rem;
+  margin-bottom: var(--space-lg);
+  opacity: 0.3;
+}
+
+.turnos-empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.turnos-empty-state p {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ─────────────────────────────────────────────────────
+   RESPONSIVE
+   ───────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .operador-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .turno-llamada-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .turno-llamada-acciones {
+    grid-template-columns: 1fr;
+  }
+  
+  .turno-espera-badge {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .operador-main {
+    padding: var(--space-md);
+  }
+  
+  .turno-llamada-card {
+    padding: var(--space-md);
+  }
+  
+  .turnos-table {
+    font-size: 0.875rem;
+  }
+  
+  .turnos-table thead th,
+  .turnos-table tbody td {
+    padding: var(--space-sm);
+  }
+}
