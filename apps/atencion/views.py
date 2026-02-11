@@ -55,11 +55,11 @@ def panel_mesa(request):
             estado_id__in=[Turno.LLAMANDO, Turno.EN_ATENCION]
         ).select_related('ticket__persona', 'tramite', 'area', 'estado').first()
     
-    # Turnos pendientes del área del operador
+    # Turnos pendientes del área del operador (sin filtrar por fecha,
+    # para que se vean los que quedaron pendientes de días anteriores)
     area_filter = {'area': area} if area else {}
     turnos_pendientes = Turno.objects.filter(
         estado_id=Turno.PENDIENTE,
-        fecha_turno=timezone.localdate(),
         **area_filter,
     ).select_related(
         'ticket__persona', 'tramite', 'area'
@@ -68,7 +68,6 @@ def panel_mesa(request):
     # Contar turnos en espera
     total_espera = Turno.objects.filter(
         estado_id=Turno.PENDIENTE,
-        fecha_turno=timezone.localdate(),
         **area_filter,
     ).count()
     

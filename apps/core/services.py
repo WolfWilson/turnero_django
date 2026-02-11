@@ -366,12 +366,12 @@ def obtener_proximo_turno(area: Area) -> Turno | None:
     Obtiene el siguiente turno a atender, respetando prioridad y orden de llegada.
     Turnos con mayor prioridad se atienden primero.
     A igual prioridad, se atiende por orden de creación (FIFO).
+    Incluye turnos pendientes de días anteriores que no fueron vencidos.
     """
     return (
         Turno.objects.filter(
             area=area,
             estado_id=Turno.PENDIENTE,
-            fecha_turno=timezone.localdate(),
         )
         .select_related('ticket__persona', 'tramite')
         .order_by('-ticket__prioridad', 'fecha_hora_creacion')

@@ -12,16 +12,16 @@
   <p class="content-subtitle">Bienvenido, {{ request.user.get_full_name|default:request.user.username }}</p>
 </div>
 
-<!-- Estadísticas -->
+<!-- Estadísticas principales -->
 <div class="dashboard-stats">
-  <!-- Card: Pendientes -->
+  <!-- Card: Pendientes Hoy -->
   <div class="stat-card">
     <div class="stat-card-header">
       <div class="stat-icon">
         <i class="fas fa-clock"></i>
       </div>
       <div class="stat-meta">
-        <div class="stat-label">Estado</div>
+        <div class="stat-label">Hoy</div>
         <div class="stat-trend up">
           <i class="fas fa-arrow-up"></i>
           <span>Activo</span>
@@ -49,7 +49,7 @@
       </div>
     </div>
     <div class="stat-card-body">
-      <div class="stat-value" style="color: var(--color-success);">{{ stats.en_atencion }}</div>
+      <div class="stat-value" style="color: var(--color-success);">{{ stats.en_atencion|add:stats.llamando }}</div>
       <p class="stat-description">En Atención Ahora</p>
     </div>
   </div>
@@ -70,7 +70,39 @@
     </div>
   </div>
   
-  <!-- Card: Total Sistema -->
+  <!-- Card: Vencidos (pendientes de días anteriores) -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-icon" style="background: rgba(255, 152, 0, 0.2); color: var(--color-warning);">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="stat-meta">
+        <div class="stat-label">Acumulado</div>
+      </div>
+    </div>
+    <div class="stat-card-body">
+      <div class="stat-value" style="color: var(--color-warning);">{{ stats.pendientes_vencidos }}</div>
+      <p class="stat-description">Turnos Vencidos</p>
+    </div>
+  </div>
+
+  <!-- Card: No se presentaron -->
+  <div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-icon" style="background: rgba(244, 67, 54, 0.2); color: var(--color-danger);">
+        <i class="fas fa-user-slash"></i>
+      </div>
+      <div class="stat-meta">
+        <div class="stat-label">Hoy</div>
+      </div>
+    </div>
+    <div class="stat-card-body">
+      <div class="stat-value" style="color: var(--color-danger);">{{ stats.no_presento }}</div>
+      <p class="stat-description">No se Presentaron</p>
+    </div>
+  </div>
+  
+  <!-- Card: Total del Día -->
   <div class="stat-card">
     <div class="stat-card-header">
       <div class="stat-icon" style="background: rgba(156, 39, 176, 0.2); color: #9c27b0;">
@@ -81,7 +113,7 @@
       </div>
     </div>
     <div class="stat-card-body">
-      <div class="stat-value" style="color: #9c27b0;">{{ stats.pendientes|add:stats.en_atencion|add:stats.finalizados }}</div>
+      <div class="stat-value" style="color: #9c27b0;">{{ stats.total_hoy }}</div>
       <p class="stat-description">Turnos del Día</p>
     </div>
   </div>
@@ -107,44 +139,62 @@
   </div>
   
   <div class="turnos-list">
-    {% comment %}
-    <!-- Ejemplo de turno - esto se poblará dinámicamente -->
+    {% for turno in turnos_recientes %}
     <div class="turno-item">
-      <div class="turno-number">001</div>
+      <div class="turno-number">{{ turno.numero_visible|stringformat:"03d" }}</div>
       <div class="turno-info">
-        <h4 class="turno-name">Juan Pérez</h4>
+        <h4 class="turno-name">
+          {% if turno.ticket.persona %}
+            {{ turno.ticket.persona.apellido|upper }}, {{ turno.ticket.persona.nombre|title }}
+          {% else %}
+            Sin identificar
+          {% endif %}
+        </h4>
         <div class="turno-details">
           <span class="turno-detail-item">
             <i class="fas fa-briefcase"></i>
-            Trámite General
+            {{ turno.tramite.nombre }}
           </span>
           <span class="turno-detail-item">
             <i class="fas fa-clock"></i>
-            10:30 AM
+            {{ turno.fecha_hora_creacion|date:"H:i" }}
           </span>
           <span class="turno-detail-item">
             <i class="fas fa-building"></i>
-            Mesa 1
+            {% if turno.mesa_asignada %}{{ turno.mesa_asignada.nombre }}{% else %}—{% endif %}
           </span>
         </div>
       </div>
-      <div class="turno-estado en-atencion">
-        <i class="fas fa-user-check"></i>
-        En Atención
+      <div class="turno-estado
+        {% if turno.estado_id == 0 %}pendiente
+        {% elif turno.estado_id == 1 %}llamando
+        {% elif turno.estado_id == 2 %}en-atencion
+        {% elif turno.estado_id == 3 %}finalizado
+        {% elif turno.estado_id == 4 %}no-presento
+        {% elif turno.estado_id == 5 %}derivado
+        {% endif %}">
+        <i class="fas
+          {% if turno.estado_id == 0 %}fa-clock
+          {% elif turno.estado_id == 1 %}fa-bell
+          {% elif turno.estado_id == 2 %}fa-user-check
+          {% elif turno.estado_id == 3 %}fa-check-circle
+          {% elif turno.estado_id == 4 %}fa-user-slash
+          {% elif turno.estado_id == 5 %}fa-share
+          {% endif %}"></i>
+        {{ turno.estado.nombre }}
       </div>
     </div>
-    {% endcomment %}
-    
-    <!-- Empty State -->
+    {% empty %}
     <div class="empty-state">
       <i class="fas fa-inbox"></i>
-      <h3>No hay turnos activos</h3>
+      <h3>No hay turnos hoy</h3>
       <p>Los turnos aparecerán aquí cuando se emitan desde el tótem</p>
       <a href="{% url 'turnos:turnero_public' %}" class="btn btn-primary" target="_blank">
         <i class="fas fa-plus"></i>
         Emitir Primer Turno
       </a>
     </div>
+    {% endfor %}
   </div>
 </div>
 
@@ -224,4 +274,25 @@
   </div>
   {% endif %}
 </div>
+
+<!-- Estilos para estados de turno en la lista -->
+<style>
+  .turno-estado {
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .turno-estado.pendiente    { background: rgba(255,193,7,0.15); color: #ffc107; }
+  .turno-estado.llamando     { background: rgba(33,150,243,0.15); color: #2196f3; }
+  .turno-estado.en-atencion  { background: rgba(76,175,80,0.15); color: #4caf50; }
+  .turno-estado.finalizado   { background: rgba(0,200,83,0.15); color: #00c853; }
+  .turno-estado.no-presento  { background: rgba(244,67,54,0.15); color: #f44336; }
+  .turno-estado.derivado     { background: rgba(156,39,176,0.15); color: #9c27b0; }
+  .dashboard-stats { flex-wrap: wrap; }
+</style>
 {% endblock %}
