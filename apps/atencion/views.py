@@ -157,7 +157,10 @@ def api_finalizar_atencion(request, turno_id):
     
     motivo_cierre_id = data.get('motivo_cierre_id')
     prioridad_consulta = data.get('prioridad_consulta', 0)
-    observaciones = data.get('observaciones', '').strip() or None
+    observaciones = data.get('observaciones') or ''
+    observaciones = observaciones.strip() or None
+    
+    logger.info(f"Finalizando turno {turno_id}: motivo={motivo_cierre_id}, prioridad={prioridad_consulta}, obs={observaciones}")
     
     try:
         turno = Turno.objects.select_related('estado', 'area').get(pk=turno_id)
@@ -167,12 +170,14 @@ def api_finalizar_atencion(request, turno_id):
             prioridad_consulta=prioridad_consulta,
             observaciones=observaciones
         )
+        logger.info(f"Turno {turno_id} finalizado correctamente. Estado: {turno.estado.nombre}")
         return JsonResponse({
             'ok': True,
             'turno_id': turno.id,
             'estado': turno.estado.nombre,
         })
     except (Turno.DoesNotExist, ValueError) as e:
+        logger.error(f"Error finalizando turno {turno_id}: {str(e)}")
         return JsonResponse({'error': str(e)}, status=400)
 
 

@@ -8,6 +8,7 @@ from .models import (
     Area, Tramite, Mesa, Persona, Ticket, Turno,
     EstadoTicket, EstadoTurno, ConfiguracionArea,
     TurnoHistorialDerivacion, Usuario, LlamadaTurno,
+    MotivoCierre,
 )
 from .services_aportes import buscar_persona_por_dni as buscar_en_aportes
 

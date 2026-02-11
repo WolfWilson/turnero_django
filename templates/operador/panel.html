@@ -214,7 +214,15 @@
       {% if turno_actual %}
       <div style="background: rgba(var(--color-primary-rgb), 0.05); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem;">
         <strong style="display: block; margin-bottom: 0.25rem;">Resumen de Turno</strong>
-        <div>Usuario: {{ turno_actual.ticket.persona.apellido|upper }}, {{ turno_actual.ticket.persona.nombre|title }}</div>
+        <div>Usuario: <span id="modal-nombre-usuario">{{ turno_actual.ticket.persona.apellido|upper }}, {{ turno_actual.ticket.persona.nombre|title }}</span></div>
+        {% if turno_actual.fecha_hora_inicio_atencion %}
+        <div>Hora Inicio: {{ turno_actual.fecha_hora_inicio_atencion|date:"H:i" }}</div>
+        {% endif %}
+      </div>
+      {% else %}
+      <div style="background: rgba(var(--color-primary-rgb), 0.05); padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem;">
+        <strong style="display: block; margin-bottom: 0.25rem;">Resumen de Turno</strong>
+        <div>Usuario: <span id="modal-nombre-usuario"></span></div>
         <div>Hora Inicio: <span id="modal-hora-inicio"></span></div>
       </div>
       {% endif %}
@@ -514,7 +522,13 @@ function resolverConfirm(value) {
 function cerrarModal(modalId) {
   document.getElementById(modalId).style.display = 'none';
   if (modalId === 'modal-motivo') {
-    document.getElementById('motivo-texto').value = '';
+    // Resetear campos del formulario de cierre
+    const motivoSelect = document.getElementById('motivo-cierre-select');
+    const prioridadSelect = document.getElementById('prioridad-select');
+    const observacionesTextarea = document.getElementById('observaciones-texto');
+    if (motivoSelect) motivoSelect.value = '';
+    if (prioridadSelect) prioridadSelect.value = '';
+    if (observacionesTextarea) observacionesTextarea.value = '';
     turnoFinalizandoId = null;
   }
   if (modalId === 'modal-derivar') {
@@ -597,37 +611,63 @@ function finalizarAtencion(turnoId) {
     horaInicioEl.textContent = ahora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
   }
   
-  // Resetear campos
-  document.getElementById('motivo-cierre-select').value = '';
-  document.getElementById('prioridad-select').value = '';
-  document.getElementById('observaciones-texto').value = '';
+  // Resetear campos (verificando que existan)
+  const motivoSelect = document.getElementById('motivo-cierre-select');
+  const prioridadSelect = document.getElementById('prioridad-select');
+  const observacionesTextarea = document.getElementById('observaciones-texto');
+  
+  if (motivoSelect) motivoSelect.value = '';
+  if (prioridadSelect) prioridadSelect.value = '';
+  if (observacionesTextarea) observacionesTextarea.value = '';
   
   document.getElementById('modal-motivo').style.display = 'flex';
-  setTimeout(() => document.getElementById('motivo-cierre-select').focus(), 150);
+  setTimeout(() => {
+    if (motivoSelect) motivoSelect.focus();
+  }, 150);
 }
 
 async function confirmarFinalizacion() {
-  const motivoCierreId = parseInt(document.getElementById('motivo-cierre-select').value);
-  const prioridadConsulta = parseInt(document.getElementById('prioridad-select').value);
-  const observaciones = document.getElementById('observaciones-texto').value.trim();
+  // Capturar elementos y valores ANTES de cualquier operación
+  const motivoSelect = document.getElementById('motivo-cierre-select');
+  const prioridadSelect = document.getElementById('prioridad-select');
+  const observacionesTextarea = document.getElementById('observaciones-texto');
+  
+  if (!motivoSelect || !prioridadSelect || !observacionesTextarea) {
+    showToast('Error: elementos del formulario no encontrados', 'error');
+    return;
+  }
+  
+  const motivoCierreId = parseInt(motivoSelect.value);
+  const prioridadConsulta = parseInt(prioridadSelect.value);
+  const observaciones = observacionesTextarea.value.trim();
+  
+  // Guardar el ID antes de cerrar el modal (cerrarModal lo pone a null)
+  const turnoId = turnoFinalizandoId;
   
   // Validaciones
   if (AREA_CONFIG.requiere_motivo_fin && !motivoCierreId) {
     showToast('Debe seleccionar un motivo de cierre', 'warning');
     return;
   }
-  if (prioridadConsulta === '' || isNaN(prioridadConsulta)) {
+  if (isNaN(prioridadConsulta)) {
     showToast('Debe seleccionar una prioridad', 'warning');
     return;
   }
   
+  // Cerrar modal y limpiar campos
+  document.getElementById('modal-motivo').style.display = 'none';
+  motivoSelect.value = '';
+  prioridadSelect.value = '';
+  observacionesTextarea.value = '';
+  turnoFinalizandoId = null;
+  
   try {
-    await apiFetch(`/atencion/api/finalizar/${turnoFinalizandoId}/`, {
+    await apiFetch(`/atencion/api/finalizar/${turnoId}/`, {
       motivo_cierre_id: motivoCierreId || null,
       prioridad_consulta: prioridadConsulta,
       observaciones: observaciones || null
     });
-    cerrarModal('modal-motivo');
+    
     showToast('Atención finalizada correctamente', 'success');
     setTimeout(() => actualizarPanel(), 800);
   } catch (e) {
