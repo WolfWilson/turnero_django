@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from apps.core import services
-from apps.core.models import Tramite, Turno
+from apps.core.models import Tramite, Turno, Area
 from .serializers import TurnoEmitirSerializer, BuscarPersonaSerializer
 
 
@@ -21,12 +21,16 @@ class BuscarPersona(APIView):
         datos = services.buscar_persona_por_dni(dni)
         if not datos:
             return Response({"detail": "DNI no encontrado"}, status=status.HTTP_404_NOT_FOUND)
-        return Response(datos)
+        
+        # No exponer fecha_nacimiento_date (es un objeto date) al JSON
+        resp = {k: v for k, v in datos.items() if k != 'fecha_nacimiento_date'}
+        return Response(resp)
 
 
 class EmitirTurno(APIView):
     """
     POST  /api/turnos/emitir/
+    Acepta: tramite_id, dni (opcional), es_embarazada (bool), es_discapacitado (bool)
     """
     def post(self, request):
         ser = TurnoEmitirSerializer(data=request.data)
@@ -36,9 +40,15 @@ class EmitirTurno(APIView):
             pk=ser.validated_data["tramite_id"]
         )
         dni = ser.validated_data.get("dni")
+        es_embarazada = ser.validated_data.get("es_embarazada", False)
+        es_discapacitado = ser.validated_data.get("es_discapacitado", False)
 
         try:
-            turno = services.emitir_turno(tramite.area, tramite, dni)
+            turno = services.emitir_turno(
+                tramite.area, tramite, dni,
+                es_embarazada=es_embarazada,
+                es_discapacitado=es_discapacitado,
+            )
         except ValueError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -55,8 +65,27 @@ class EmitirTurno(APIView):
         )
 
         return Response({
-            "turno_id":  turno.id,
-            "nombre":    nombre_visible,
-            "tramite":   tramite.nombre,
-            "espera":    espera,
+            "turno_id":   turno.id,
+            "nombre":     nombre_visible,
+            "tramite":    tramite.nombre,
+            "espera":     espera,
+            "prioridad":  turno.ticket.prioridad,
         })
+
+
+class ConfiguracionAreaAPI(APIView):
+    """
+    GET /api/config/          → configuración del área por defecto
+    GET /api/config/<area_id>/ → configuración de un área específica
+    """
+    def get(self, request, area_id=None):
+        if area_id:
+            area = Area.objects.filter(pk=area_id, activa=True).first()
+        else:
+            area = Area.objects.filter(activa=True).first()
+        
+        if not area:
+            return Response({"detail": "Área no encontrada"}, status=status.HTTP_404_NOT_FOUND)
+        
+        config = services.obtener_config_area(area)
+        return Response(config)

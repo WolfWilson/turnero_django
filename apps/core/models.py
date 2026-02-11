@@ -426,29 +426,83 @@ class TurnoHistorialDerivacion(models.Model):
 
 
 # -----------------------------------------------
-# 9. ConfiguracionArea
+# 9. ConfiguracionArea (campos estructurados)
 # -----------------------------------------------
 class ConfiguracionArea(models.Model):
-    id          = models.AutoField(primary_key=True, db_column="IdConfiguracionArea")
-    area        = models.ForeignKey(
+    id   = models.AutoField(primary_key=True, db_column="IdConfiguracionArea")
+    area = models.OneToOneField(
         Area, on_delete=models.CASCADE,
-        db_column="FkIdArea", related_name="configuraciones",
+        db_column="FkIdArea", related_name="configuracion",
     )
-    clave       = models.CharField(max_length=100, db_column="Clave")
-    valor       = models.CharField(max_length=2000, db_column="Valor")
-    descripcion = models.CharField(max_length=255, null=True, blank=True, db_column="Descripcion")
+
+    # ── TURNOS ──
+    permitir_sin_dni       = models.BooleanField(default=False, db_column="PermitirSinDni",
+                             verbose_name="Permitir turnos sin DNI")
+    multiples_turnos_dni   = models.BooleanField(default=True, db_column="MultiplesTurnosDni",
+                             verbose_name="Permitir múltiples turnos por DNI")
+    max_turnos_por_dia     = models.SmallIntegerField(default=3, db_column="MaxTurnosPorDia",
+                             verbose_name="Máx. turnos por persona cada 24 hs")
+    vencimiento_turnos     = models.BooleanField(default=True, db_column="VencimientoTurnos",
+                             verbose_name="Vencer turnos pendientes del día anterior")
+
+    # ── PRIORIDADES ──
+    prioridad_adulto_mayor = models.BooleanField(default=True, db_column="PrioridadAdultoMayor",
+                             verbose_name="Prioridad adultos mayores (+65)")
+    prioridad_embarazadas  = models.BooleanField(default=True, db_column="PrioridadEmbarazadas",
+                             verbose_name="Prioridad embarazadas")
+    prioridad_discapacidad = models.BooleanField(default=True, db_column="PrioridadDiscapacidad",
+                             verbose_name="Prioridad discapacitados")
+
+    # ── VISUALES ──
+    mensaje_pantalla       = models.CharField(max_length=150, default="El final es en donde partí",
+                             db_column="MensajePantalla",
+                             verbose_name="Mensaje personalizado en pantalla")
+    media_habilitada       = models.BooleanField(default=False, db_column="MediaHabilitada",
+                             verbose_name="Habilitar media (video/imagen) en monitor")
+    # Placeholder: en el futuro se ampliará a modelo MediaPlaylist
+
+    # ── OPERACIÓN ──
+    permitir_derivaciones  = models.BooleanField(default=False, db_column="PermitirDerivaciones",
+                             verbose_name="Permitir derivaciones entre operadores")
+    requiere_motivo_fin    = models.BooleanField(default=True, db_column="RequiereMotivoFin",
+                             verbose_name="Requiere motivo al finalizar turno")
+
+    # ── HORARIO DE ATENCIÓN ──
+    emision_hora_inicio    = models.TimeField(default="07:00", db_column="EmisionHoraInicio",
+                             verbose_name="Hora inicio emisión de turnos")
+    emision_hora_fin       = models.TimeField(default="12:30", db_column="EmisionHoraFin",
+                             verbose_name="Hora fin emisión de turnos")
+    atencion_hora_inicio   = models.TimeField(default="07:30", db_column="AtencionHoraInicio",
+                             verbose_name="Hora inicio atención")
+    atencion_hora_fin      = models.TimeField(default="12:30", db_column="AtencionHoraFin",
+                             verbose_name="Hora fin atención")
+
+    # ── CONFIGURACIÓN GENERAL ──
+    tiempo_llamada_seg     = models.SmallIntegerField(default=10, db_column="TiempoLlamadaSeg",
+                             verbose_name="Tiempo de llamada / alerta (segundos)")
+    voz_llamada            = models.BooleanField(default=False, db_column="VozLlamada",
+                             verbose_name="Voz de llamada")
+    sonido_llamada         = models.BooleanField(default=True, db_column="SonidoLlamada",
+                             verbose_name="Sonido de llamada")
 
     class Meta:
         managed  = False
         db_table = "ConfiguracionArea"
-        unique_together = ("area", "clave")
+        verbose_name = "Configuración de Área"
+        verbose_name_plural = "Configuraciones de Áreas"
 
     def __str__(self):
-        return f"{self.area} - {self.clave}"
+        return f"Configuración: {self.area}"
+
+    @classmethod
+    def get_for_area(cls, area):
+        """Obtiene o crea la configuración con valores por defecto para un área."""
+        config, created = cls.objects.get_or_create(area=area)
+        return config
 
 
 # -----------------------------------------------
-# 10. ConfiguracionAreaHistorial
+# 10. ConfiguracionAreaHistorial (auditoría)
 # -----------------------------------------------
 class ConfiguracionAreaHistorial(models.Model):
     id            = models.AutoField(primary_key=True, db_column="IdConfiguracionAreaHistorial")
@@ -456,6 +510,7 @@ class ConfiguracionAreaHistorial(models.Model):
         ConfiguracionArea, on_delete=models.CASCADE,
         db_column="FkIdConfiguracionArea", related_name="historial",
     )
+    campo_modificado        = models.CharField(max_length=100, db_column="CampoModificado")
     valor_anterior          = models.CharField(max_length=2000, null=True, blank=True, db_column="ValorAnterior")
     valor_nuevo             = models.CharField(max_length=2000, db_column="ValorNuevo")
     usuario_modifico        = models.ForeignKey(
@@ -467,9 +522,11 @@ class ConfiguracionAreaHistorial(models.Model):
     class Meta:
         managed  = False
         db_table = "ConfiguracionAreaHistorial"
+        verbose_name = "Historial de configuración"
+        verbose_name_plural = "Historial de configuraciones"
 
     def __str__(self):
-        return f"{self.configuracion} modificada por {self.usuario_modifico}"
+        return f"{self.configuracion.area} | {self.campo_modificado}: {self.valor_anterior} → {self.valor_nuevo}"
 
 
 # -----------------------------------------------

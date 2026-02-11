@@ -11,6 +11,17 @@
 {% endblock %}
 
 {% block content %}
+<!-- Configuración del área inyectada para JS -->
+<script>
+  const MONITOR_CONFIG = {
+    tiempoLlamadaSeg: {{ datos_llamada.tiempo_llamada_seg|default:"10" }},
+    vozLlamada: {{ datos_llamada.voz_llamada|yesno:"true,false" }},
+    sonidoLlamada: {{ datos_llamada.sonido_llamada|yesno:"true,false" }},
+    mensajePantalla: "{{ config.mensaje_pantalla|default:'Bienvenido'|escapejs }}",
+    mediaHabilitada: {{ config.media_habilitada|yesno:"true,false" }},
+  };
+</script>
+
 <div class="monitor-grid">
   <!-- Lista principal -->
   <section class="turn-list" aria-label="Turnos en pantalla">
@@ -22,38 +33,181 @@
     </header>
     
     <ul id="turn-container">
-      {% for t in turnos|slice:":8" %}
-        <li class="turn-card {% if t.is_active %}active{% endif %}">
-          <span class="material-icons-outlined bell">notifications</span>
-          <span class="turno">{{ t.display }}</span>
-          <span class="box">{{ t.box }}</span>
+      {# Turnos en atención (los que están siendo atendidos ahora) #}
+      {% for t in turnos_atencion %}
+        <li class="turn-card {% if t.estado_id == 1 %}active{% endif %}">
+          <span class="material-icons-outlined bell">{% if t.estado_id == 1 %}notifications_active{% else %}person{% endif %}</span>
+          <span class="turno">
+            {% if t.ticket.persona %}{{ t.ticket.persona.nombre_completo }}{% else %}N° {{ t.numero_visible }}{% endif %}
+            | {{ t.tramite.nombre }}
+          </span>
+          <span class="box">{% if t.mesa_asignada %}{{ t.mesa_asignada.nombre }}{% else %}-{% endif %}</span>
         </li>
-      {% empty %}
-        <li class="turn-empty">No hay turnos pendientes</li>
       {% endfor %}
+      
+      {# Turnos llamando (con alerta visual) #}
+      {% for t in turnos_llamando %}
+        <li class="turn-card active">
+          <span class="material-icons-outlined bell">notifications_active</span>
+          <span class="turno">
+            {% if t.ticket.persona %}{{ t.ticket.persona.nombre_completo }}{% else %}N° {{ t.numero_visible }}{% endif %}
+            | {{ t.tramite.nombre }}
+          </span>
+          <span class="box">{% if t.mesa_asignada %}{{ t.mesa_asignada.nombre }}{% else %}-{% endif %}</span>
+        </li>
+      {% endfor %}
+      
+      {% if not turnos_atencion and not turnos_llamando %}
+        <li class="turn-empty">No hay turnos en atención</li>
+      {% endif %}
     </ul>
+    
+    {# Mensaje configurable del área #}
+    <div class="monitor-mensaje" id="mensaje-pantalla">
+      {{ config.mensaje_pantalla|default:"Bienvenido" }}
+    </div>
   </section>
 
-  <!-- Panel de video/imágen -->
-  <!-- <section class="media-pane" aria-label="Contenido institucional">
-    <img src="{% static 'media/placeholder.jpg' %}" alt="Video institucional" class="media-placeholder">
-  </section>
-</div> -->
-
-<section class="media-pane" aria-label="Contenido institucional">
+  <!-- Panel de video en loop (siempre visible) -->
+  <section class="media-pane" aria-label="Contenido institucional">
     <video src="{% static 'media/placeholder_video.mp4' %}" loop autoplay muted playsinline class="media-placeholder">
       Tu navegador no soporta la reproducción de video.
     </video>
   </section>
+</div>
 
 <!-- ████████ Overlay de aviso ████████ -->
 <div id="alert-overlay" aria-live="assertive" hidden>
   <div id="alert-wrapper"></div>
 </div>
 
-<!-- ▸ botón demo (elimina en prod) -->
-<button id="demo-call" class="demo-btn">DEMO CALL</button>
+<!-- Audio de llamada (placeholder — se reemplaza con archivo real) -->
+{% if config.sonido_llamada %}
+<audio id="alert-sound" preload="auto">
+  <!-- TODO: Reemplazar con archivo de sonido real cuando esté disponible -->
+  <!-- <source src="{% static 'media/sonido_llamada.mp3' %}" type="audio/mpeg"> -->
+</audio>
+{% endif %}
 
 
-<script src="{% static 'js/monitor/monitor.js' %}"></script>
+<script>
+// =====================================================================
+//  MONITOR — Lógica con configuración del área
+// =====================================================================
+(() => {
+  /* === Reloj ======================================================= */
+  const clock = document.getElementById("clock");
+  const tick  = () =>
+    clock.textContent = new Date().toLocaleTimeString("es-AR",
+      {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  tick(); setInterval(tick, 1000);
+
+  /* === Overlay de aviso =========================================== */
+  const overlay  = document.getElementById("alert-overlay");
+  const wrapper  = document.getElementById("alert-wrapper");
+  const alertSound = document.getElementById("alert-sound");
+  let hideTimer  = null;
+
+  // Tiempo de alerta configurable desde ConfiguracionArea
+  const ALERT_DURATION = (MONITOR_CONFIG.tiempoLlamadaSeg || 10) * 1000;
+
+  /**
+   * Muestra los turnos llamados con alerta visual.
+   * Usa tiempo_llamada_seg de la configuración del área.
+   * @param {Array<{nombre:string, box:string, tramite:string}>} data
+   */
+  function showAlert(data){
+    wrapper.innerHTML = "";
+    data.slice(0,4).forEach(t => {
+      const card = document.createElement("article");
+      card.className = "alert-card";
+      card.innerHTML = `
+        <span class="material-icons-outlined bell">notifications_active</span>
+        <div class="info">
+          <span class="name">${t.nombre}</span>
+          <span class="box">BOX&nbsp;${t.box}</span>
+        </div>`;
+      wrapper.appendChild(card);
+    });
+
+    // Mostrar overlay
+    overlay.classList.add("show");
+    overlay.hidden = false;
+
+    // ── Sonido de llamada (configurable) ──
+    if (MONITOR_CONFIG.sonidoLlamada && alertSound) {
+      alertSound.currentTime = 0;
+      alertSound.play().catch(() => {/* Autoplay bloqueado — ok */});
+    }
+
+    // ── Voz de llamada (placeholder TTS) ──
+    if (MONITOR_CONFIG.vozLlamada && 'speechSynthesis' in window) {
+      data.forEach(t => {
+        const utterance = new SpeechSynthesisUtterance(
+          `Turno de ${t.nombre}, dirigirse a ${t.box}`
+        );
+        utterance.lang = 'es-AR';
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        speechSynthesis.speak(utterance);
+      });
+    }
+
+    // Reinicia temporizador con duración configurable
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(hideAlert, ALERT_DURATION);
+  }
+
+  function hideAlert(){
+    overlay.classList.remove("show");
+    setTimeout(() => overlay.hidden = true, 500);
+  }
+
+  /* === Polling de turnos llamando ================================= */
+  // En el futuro se reemplazará con WebSockets
+  let lastCalledIds = new Set();
+
+  async function pollTurnosLlamando() {
+    try {
+      const area = "{{ area.id|default:'' }}";
+      const url = area ? `/turnos/monitor/?area=${area}` : '/turnos/monitor/';
+      // Por ahora hacemos reload completo — con WebSockets será push
+    } catch(e) {
+      console.error('Error polling:', e);
+    }
+  }
+
+  /* === Integración futura con WebSockets ========================== *
+     const ws = new WebSocket("wss://…/monitor/");
+     ws.onmessage = e => {
+       const msg = JSON.parse(e.data);
+       if (msg.type === "call") showAlert(msg.turnos);
+       if (msg.type === "list") updateList(msg.turnos);
+     };
+  */
+
+  // Demo de la funcionalidad (quitar en producción)
+  window._demoCall = function() {
+    showAlert([
+      {nombre:"PÉREZ, ANA", box:"Mesa 2", tramite:"Consulta"},
+      {nombre:"BENITEZ, JOSE", box:"Mesa 5", tramite:"Trámite"}
+    ]);
+  };
+
+  /* ===== Auto-refresh cada 8 segundos ============================= */
+  setInterval(() => location.reload(), 8000);
+})();
+</script>
+
+<style>
+  .monitor-mensaje {
+    text-align: center;
+    padding: 1rem;
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.7);
+    font-style: italic;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin-top: auto;
+  }
+</style>
 {% endblock %}

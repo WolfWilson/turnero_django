@@ -55,13 +55,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* mostrar datos de la persona */
   function mostrarDatosPersona(){
-    $("#persona-nombre").textContent = personaData.nombreCompleto;
-    $("#persona-dni").textContent = personaData.dni;
-    if(personaData.fechaNac){
-      $("#persona-fechanac").textContent = new Date(personaData.fechaNac).toLocaleDateString('es-AR');
-    }
-    if(personaData.sexo){
-      $("#persona-sexo").textContent = personaData.sexo === 'M' ? 'Masculino' : 'Femenino';
+    try {
+      $("#persona-nombre").textContent = personaData.nombreCompleto || '-';
+      $("#persona-dni").textContent = personaData.dni || '-';
+      
+      if(personaData.fechaNac && personaData.fechaNac !== ''){
+        // Formato esperado: DD/MM/YYYY desde el servidor
+        $("#persona-fechanac").textContent = personaData.fechaNac;
+      } else {
+        $("#persona-fechanac").textContent = '-';
+      }
+      
+      if(personaData.sexo && personaData.sexo !== ''){
+        const sexoTexto = personaData.sexo.toUpperCase() === 'M' ? 'Masculino' : 
+                         personaData.sexo.toUpperCase() === 'F' ? 'Femenino' : personaData.sexo;
+        $("#persona-sexo").textContent = sexoTexto;
+      } else {
+        $("#persona-sexo").textContent = '-';
+      }
+    } catch(e) {
+      console.error('Error al mostrar datos:', e);
     }
   }
 

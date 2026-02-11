@@ -7,6 +7,10 @@
         "/^C:/Users/wbenitez/Downloads/Git/turnero_django/venv/Scripts/python\\.exe manage\\.py check$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^\\.\\\\venv\\\\Scripts\\\\python\\.exe -c \"\nimport os, django\nos\\.environ\\.setdefault\\('DJANGO_SETTINGS_MODULE','turnero\\.settings'\\)\ndjango\\.setup\\(\\)\nfrom django\\.db import connections\ncursor = connections\\['default'\\]\\.cursor\\(\\)\n\n# Verificar si la tabla ConfiguracionArea existe y ver sus columnas actuales\ncursor\\.execute\\(\\\\\"\\\\\"\\\\\"\nSELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH\nFROM INFORMATION_SCHEMA\\.COLUMNS\nWHERE TABLE_NAME = 'ConfiguracionArea'\nORDER BY ORDINAL_POSITION\n\\\\\"\\\\\"\\\\\"\\)\nrows = cursor\\.fetchall\\(\\)\nprint\\('Columnas actuales de ConfiguracionArea:'\\)\nfor r in rows:\n    print\\(f'  \\{r\\[0\\]\\} \\(\\{r\\[1\\]\\}, \\{r\\[2\\]\\}\\)'\\)\n\"$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }
