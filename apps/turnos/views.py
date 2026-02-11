@@ -66,6 +66,15 @@ def monitor(request):
         'ticket__persona', 'tramite', 'mesa_asignada'
     ).order_by('-fecha_hora_inicio_atencion')[:8]
     
+    # Turnos pendientes (en espera)
+    turnos_pendientes = Turno.objects.filter(
+        fecha_turno=hoy,
+        estado_id=Turno.PENDIENTE,
+        **({"area": area} if area else {}),
+    ).select_related(
+        'ticket__persona', 'tramite'
+    ).order_by('fecha_hora_creacion')[:20]
+    
     # Todos los turnos del día para la lista
     lista = Turno.objects.filter(
         fecha_turno=hoy,
@@ -78,6 +87,7 @@ def monitor(request):
         'turnos': lista,
         'turnos_llamando': turnos_llamando,
         'turnos_atencion': turnos_atencion,
+        'turnos_pendientes': turnos_pendientes,
         'area': area,
         'config': config,
         'datos_llamada': datos_llamada,

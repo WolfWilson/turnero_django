@@ -32,22 +32,11 @@
       <span class="col-box">BOX</span>
     </header>
     
+    <div id="turnos-llamando-container">
     <ul id="turn-container">
-      {# Turnos en atención (los que están siendo atendidos ahora) #}
-      {% for t in turnos_atencion %}
-        <li class="turn-card {% if t.estado_id == 1 %}active{% endif %}">
-          <span class="material-icons-outlined bell">{% if t.estado_id == 1 %}notifications_active{% else %}person{% endif %}</span>
-          <span class="turno">
-            {% if t.ticket.persona %}{{ t.ticket.persona.nombre_completo }}{% else %}N° {{ t.numero_visible }}{% endif %}
-            | {{ t.tramite.nombre }}
-          </span>
-          <span class="box">{% if t.mesa_asignada %}{{ t.mesa_asignada.nombre }}{% else %}-{% endif %}</span>
-        </li>
-      {% endfor %}
-      
-      {# Turnos llamando (con alerta visual) #}
+      {# Turnos llamando (con alerta visual - primero para que aparezcan arriba) #}
       {% for t in turnos_llamando %}
-        <li class="turn-card active">
+        <li class="turn-card active" data-turno-id="{{ t.id }}" data-estado="llamando">
           <span class="material-icons-outlined bell">notifications_active</span>
           <span class="turno">
             {% if t.ticket.persona %}{{ t.ticket.persona.nombre_completo }}{% else %}N° {{ t.numero_visible }}{% endif %}
@@ -57,14 +46,41 @@
         </li>
       {% endfor %}
       
-      {% if not turnos_atencion and not turnos_llamando %}
+      {# Turnos en atención #}
+      {% for t in turnos_atencion %}
+        <li class="turn-card" data-turno-id="{{ t.id }}" data-estado="atencion">
+          <span class="material-icons-outlined bell">person</span>
+          <span class="turno">
+            {% if t.ticket.persona %}{{ t.ticket.persona.nombre_completo }}{% else %}N° {{ t.numero_visible }}{% endif %}
+            | {{ t.tramite.nombre }}
+          </span>
+          <span class="box">{% if t.mesa_asignada %}{{ t.mesa_asignada.nombre }}{% else %}-{% endif %}</span>
+        </li>
+      {% endfor %}
+      
+      {# Turnos pendientes (en espera) #}
+      {% for t in turnos_pendientes %}
+        <li class="turn-card turn-pending" data-turno-id="{{ t.id }}" data-estado="pendiente">
+          <span class="material-icons-outlined bell">schedule</span>
+          <span class="turno">
+            {% if t.ticket.persona %}{{ t.ticket.persona.nombre_completo }}{% else %}N° {{ t.numero_visible }}{% endif %}
+            | {{ t.tramite.nombre }}
+          </span>
+          <span class="box">En espera</span>
+        </li>
+      {% endfor %}
+      
+      {% if not turnos_atencion and not turnos_llamando and not turnos_pendientes %}
         <li class="turn-empty">No hay turnos en atención</li>
       {% endif %}
     </ul>
+    </div>
     
+    <div id="turnos-atencion-container">
     {# Mensaje configurable del área #}
     <div class="monitor-mensaje" id="mensaje-pantalla">
       {{ config.mensaje_pantalla|default:"Bienvenido" }}
+    </div>
     </div>
   </section>
 
@@ -194,8 +210,82 @@
     ]);
   };
 
-  /* ===== Auto-refresh cada 8 segundos ============================= */
-  setInterval(() => location.reload(), 8000);
+  /* ===== Auto-actualización sin parpadeo ============================= */
+  let refreshInterval = null;
+  
+  // Rastrear IDs de turnos ya alertados para no repetir alertas
+  let alertedTurnoIds = new Set(
+    [...document.querySelectorAll('[data-estado="llamando"]')].map(el => el.dataset.turnoId)
+  );
+
+  async function actualizarMonitor() {
+    try {
+      const area = "{{ area.id|default:'' }}";
+      const url = area ? `/turnos/monitor/?area=${area}` : '/turnos/monitor/';
+      const response = await fetch(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      const html = await response.text();
+      const parser = new DOMParser();
+      const newDoc = parser.parseFromString(html, 'text/html');
+      
+      // Detectar nuevos turnos LLAMANDO para disparar alerta
+      const nuevosTurnosLlamando = newDoc.querySelectorAll('[data-estado="llamando"]');
+      const nuevosAlerts = [];
+      nuevosTurnosLlamando.forEach(el => {
+        const tid = el.dataset.turnoId;
+        if (!alertedTurnoIds.has(tid)) {
+          alertedTurnoIds.add(tid);
+          const nombre = el.querySelector('.turno')?.textContent?.split('|')[0]?.trim() || '';
+          const box = el.querySelector('.box')?.textContent?.trim() || '';
+          const tramite = el.querySelector('.turno')?.textContent?.split('|')[1]?.trim() || '';
+          nuevosAlerts.push({ nombre, box, tramite });
+        }
+      });
+      
+      // Disparar alerta visual/sonora si hay nuevos llamados
+      if (nuevosAlerts.length > 0) {
+        showAlert(nuevosAlerts);
+      }
+      
+      // Actualizar lista de turnos solo si hay cambios
+      actualizarListaSiDifiere('turnos-llamando-container', newDoc);
+    } catch (e) {
+      console.error('Error actualizando monitor:', e);
+    }
+  }
+
+  function actualizarListaSiDifiere(containerId, newDoc) {
+    const current = document.getElementById(containerId);
+    const nuevo = newDoc.getElementById(containerId);
+    
+    if (!current || !nuevo) return;
+    
+    // Solo actualizar si el contenido cambió
+    if (current.innerHTML.trim() !== nuevo.innerHTML.trim()) {
+      current.style.transition = 'opacity 0.3s';
+      current.style.opacity = '0.8';
+      setTimeout(() => {
+        current.innerHTML = nuevo.innerHTML;
+        current.style.opacity = '1';
+      }, 150);
+    }
+  }
+
+  // Iniciar polling inteligente cada 5 segundos
+  refreshInterval = setInterval(actualizarMonitor, 5000);
+
+  // Pausar polling cuando la pestaña está oculta
+  if (document.hidden !== undefined) {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        clearInterval(refreshInterval);
+      } else {
+        refreshInterval = setInterval(actualizarMonitor, 5000);
+        actualizarMonitor();
+      }
+    });
+  }
 })();
 </script>
 
@@ -208,6 +298,15 @@
     font-style: italic;
     border-top: 1px solid rgba(255,255,255,0.1);
     margin-top: auto;
+  }
+  .turn-pending {
+    opacity: 0.55;
+    border-left: 3px solid rgba(255,193,7,0.6);
+  }
+  .turn-pending .box {
+    font-size: 0.85em;
+    color: rgba(255,193,7,0.8);
+    font-style: italic;
   }
 </style>
 {% endblock %}

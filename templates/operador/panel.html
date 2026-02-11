@@ -10,8 +10,7 @@
   const CSRF_TOKEN = "{{ csrf_token }}";
 </script>
 
-<!-- TURNO EN LLAMADA / ATENCIÓN -->
-{% if turno_actual %}
+<!-- TURNO EN LLAMADA / ATENCIÓN --><div id="turno-actual-section">{% if turno_actual %}
 <div class="turno-llamada-card">
   <div class="turno-llamada-header">
     <div class="turno-llamada-icon">
@@ -145,9 +144,10 @@
   </div>
 </div>
 {% endif %}
+</div>
 
 <!-- LISTA DE TURNOS EN ESPERA -->
-<div class="turnos-espera-section">
+<div id="turnos-pendientes" class="turnos-espera-section">
   <div class="turnos-espera-header">
     <h2 class="turnos-espera-title">
       <i class="fas fa-list"></i>
@@ -386,8 +386,57 @@ function showToast(message, type = 'info') {
   }, 3500);
 }
 
-// Auto-refresh cada 10 segundos
-setTimeout(() => location.reload(), 10000);
+// ── Auto-actualización sin parpadeo ──
+let refreshInterval = null;
+
+async function actualizarPanel() {
+  try {
+    const response = await fetch(window.location.href, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const html = await response.text();
+    const parser = new DOMParser();
+    const newDoc = parser.parseFromString(html, 'text/html');
+    
+    // Actualizar secciones solo si hay cambios
+    actualizarSiDifiere('turno-actual-section', newDoc);
+    actualizarSiDifiere('turnos-pendientes', newDoc);
+  } catch (e) {
+    console.error('Error actualizando panel:', e);
+  }
+}
+
+function actualizarSiDifiere(sectionId, newDoc) {
+  const current = document.getElementById(sectionId);
+  const nuevo = newDoc.getElementById(sectionId);
+  
+  if (!current || !nuevo) return;
+  
+  // Solo actualizar si el contenido cambió
+  if (current.innerHTML.trim() !== nuevo.innerHTML.trim()) {
+    current.style.transition = 'opacity 0.2s';
+    current.style.opacity = '0.7';
+    setTimeout(() => {
+      current.innerHTML = nuevo.innerHTML;
+      current.style.opacity = '1';
+    }, 100);
+  }
+}
+
+// Iniciar polling inteligente
+refreshInterval = setInterval(actualizarPanel, 5000);
+
+// Pausar polling cuando la pestaña está oculta (optimización)
+if (document.hidden !== undefined) {
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      clearInterval(refreshInterval);
+    } else {
+      refreshInterval = setInterval(actualizarPanel, 5000);
+      actualizarPanel(); // Actualizar inmediatamente al volver
+    }
+  });
+}
 </script>
 
 <style>
