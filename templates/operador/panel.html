@@ -203,28 +203,177 @@
 <!-- MODAL: Motivo de finalización -->
 <div id="modal-motivo" class="modal-overlay" style="display:none;">
   <div class="modal-content">
-    <h3><i class="fas fa-clipboard-check"></i> Finalizar Atención</h3>
-    <p>{{ config.requiere_motivo_fin|yesno:"Ingrese el motivo de la atención (requerido):,Motivo de la atención (opcional):" }}</p>
-    <textarea id="motivo-texto" rows="3" placeholder="Describa brevemente el motivo..." style="width:100%; padding:0.75rem; border-radius:8px; border:1px solid #ddd; font-family:inherit; font-size:0.95rem;"></textarea>
-    <div style="display:flex; gap:1rem; margin-top:1rem; justify-content:flex-end;">
-      <button onclick="cerrarModal()" style="padding:0.5rem 1.5rem; border:1px solid #ccc; border-radius:8px; background:#fff; cursor:pointer;">Cancelar</button>
-      <button id="btn-confirmar-fin" onclick="confirmarFinalizacion()" style="padding:0.5rem 1.5rem; border:none; border-radius:8px; background:#4CAF50; color:#fff; cursor:pointer; font-weight:600;">Confirmar</button>
+    <div class="modal-header">
+      <div class="modal-icon modal-icon-success"><i class="fas fa-clipboard-check"></i></div>
+      <h3>Finalizar Atención</h3>
+    </div>
+    <p class="modal-desc">{{ config.requiere_motivo_fin|yesno:"Ingrese el motivo de la atención (requerido):,Motivo de la atención (opcional):" }}</p>
+    <textarea id="motivo-texto" rows="3" class="modal-input" placeholder="Describa brevemente el motivo..."></textarea>
+    <div class="modal-actions">
+      <button onclick="cerrarModal('modal-motivo')" class="modal-btn modal-btn-cancel">Cancelar</button>
+      <button onclick="confirmarFinalizacion()" class="modal-btn modal-btn-confirm"><i class="fas fa-check"></i> Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Confirmar acción genérica -->
+<div id="modal-confirmar" class="modal-overlay" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-icon" id="confirm-modal-icon"><i class="fas fa-question-circle"></i></div>
+      <h3 id="confirm-modal-titulo">Confirmar</h3>
+    </div>
+    <p class="modal-desc" id="confirm-modal-mensaje"></p>
+    <div class="modal-actions">
+      <button onclick="resolverConfirm(false)" class="modal-btn modal-btn-cancel">Cancelar</button>
+      <button onclick="resolverConfirm(true)" class="modal-btn modal-btn-confirm" id="confirm-modal-btn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Derivar turno -->
+<div id="modal-derivar" class="modal-overlay" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-icon modal-icon-derivar"><i class="fas fa-share"></i></div>
+      <h3>Derivar Turno</h3>
+    </div>
+    <p class="modal-desc">Ingrese el ID del operador destino y un motivo opcional.</p>
+    <label class="modal-label">Operador destino (ID) <span style="color:#f44336;">*</span></label>
+    <input type="number" id="derivar-destino" class="modal-input" placeholder="Ej: 2" min="1">
+    <label class="modal-label" style="margin-top:0.75rem;">Motivo (opcional)</label>
+    <textarea id="derivar-motivo" rows="2" class="modal-input" placeholder="Motivo de la derivación..."></textarea>
+    <div class="modal-actions">
+      <button onclick="cerrarModal('modal-derivar')" class="modal-btn modal-btn-cancel">Cancelar</button>
+      <button onclick="confirmarDerivacion()" class="modal-btn modal-btn-confirm" style="background:rgba(156,39,176,0.95);"><i class="fas fa-share"></i> Derivar</button>
     </div>
   </div>
 </div>
 
 <style>
+  /* ═══ Modal System ═══ */
   .modal-overlay {
     position: fixed; top:0; left:0; width:100%; height:100%;
-    background: rgba(0,0,0,0.5); z-index: 1000;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
+    z-index: 1000;
     display: flex; align-items: center; justify-content: center;
+    animation: modalBgIn 0.25s ease-out;
   }
+  @keyframes modalBgIn { from { opacity:0; } to { opacity:1; } }
   .modal-content {
-    background: #fff; border-radius: 16px; padding: 2rem;
-    max-width: 500px; width: 90%; box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+    background: #fff; border-radius: 20px; padding: 2rem;
+    max-width: 460px; width: 92%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.1);
+    animation: modalSlideIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
   }
-  .modal-content h3 { margin: 0 0 0.75rem; color: #1a2332; }
-  .modal-content p { color: #666; margin-bottom: 1rem; }
+  @keyframes modalSlideIn {
+    from { transform: translateY(30px) scale(0.95); opacity:0; }
+    to   { transform: translateY(0) scale(1); opacity:1; }
+  }
+  .modal-header {
+    display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem;
+  }
+  .modal-header h3 { margin:0; color:#1a2332; font-size:1.2rem; }
+  .modal-icon {
+    width: 44px; height: 44px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0;
+    background: rgba(33,150,243,0.12); color: #2196f3;
+  }
+  .modal-icon-success { background: rgba(76,175,80,0.12); color: #4caf50; }
+  .modal-icon-warning { background: rgba(255,152,0,0.12); color: #ff9800; }
+  .modal-icon-danger  { background: rgba(244,67,54,0.12); color: #f44336; }
+  .modal-icon-derivar { background: rgba(156,39,176,0.12); color: #9c27b0; }
+  .modal-desc { color:#666; margin-bottom:1rem; font-size:0.95rem; line-height:1.5; }
+  .modal-label { display:block; font-size:0.85rem; font-weight:600; color:#555; margin-bottom:0.35rem; }
+  .modal-input {
+    width:100%; padding:0.75rem 1rem; border-radius:12px;
+    border:1.5px solid #e0e0e0; font-family:inherit; font-size:0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s; outline:none;
+    background: #fafafa;
+  }
+  .modal-input:focus {
+    border-color: #2196f3; box-shadow: 0 0 0 3px rgba(33,150,243,0.12);
+    background: #fff;
+  }
+  .modal-actions {
+    display:flex; gap:0.75rem; margin-top:1.25rem; justify-content:flex-end;
+  }
+  .modal-btn {
+    padding:0.6rem 1.5rem; border-radius:12px; font-size:0.9rem;
+    font-weight:600; cursor:pointer; transition: all 0.2s;
+    font-family: inherit; border: none;
+  }
+  .modal-btn-cancel {
+    background:#f5f5f5; color:#666; border:1px solid #e0e0e0;
+  }
+  .modal-btn-cancel:hover { background:#eee; }
+  .modal-btn-confirm {
+    background:rgba(76,175,80,0.95); color:#fff;
+    box-shadow: 0 2px 8px rgba(76,175,80,0.3);
+  }
+  .modal-btn-confirm:hover {
+    transform: translateY(-1px); box-shadow: 0 4px 12px rgba(76,175,80,0.4);
+  }
+
+  /* ═══ Toast Push Notifications (Stacked / Accordion) ═══ */
+  #toast-container {
+    position: fixed; top: 1.25rem; right: 1.25rem; z-index: 9999;
+    display: flex; flex-direction: column; gap: 0.5rem;
+    pointer-events: none; max-width: 420px; width: calc(100% - 2.5rem);
+  }
+  .toast-notification {
+    display: flex; align-items: flex-start; gap: 0.85rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px; color: #fff;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1);
+    pointer-events: auto;
+    animation: toastSlideIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    backdrop-filter: blur(12px);
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .toast-notification:hover { transform: translateX(-4px); }
+  .toast-notification.toast-removing {
+    animation: toastSlideOut 0.35s ease-in forwards;
+  }
+  @keyframes toastSlideIn {
+    from { transform: translateX(100%) scale(0.8); opacity:0; }
+    to   { transform: translateX(0) scale(1); opacity:1; }
+  }
+  @keyframes toastSlideOut {
+    from { transform: translateX(0); opacity:1; max-height:120px; margin-bottom:0; }
+    to   { transform: translateX(110%); opacity:0; max-height:0; margin-bottom:-0.5rem; padding:0 1.25rem; }
+  }
+  .toast-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+    background: rgba(255,255,255,0.2);
+  }
+  .toast-body { flex:1; min-width:0; }
+  .toast-title {
+    font-weight: 700; font-size: 0.85rem; margin-bottom: 0.15rem;
+    text-transform: uppercase; letter-spacing: 0.3px;
+    opacity: 0.9;
+  }
+  .toast-message { font-size: 0.92rem; font-weight: 500; line-height: 1.4; }
+  .toast-progress {
+    position: absolute; bottom:0; left:0; height:3px;
+    border-radius: 0 0 16px 16px;
+    background: rgba(255,255,255,0.4);
+    animation: toastProgress var(--toast-duration, 4s) linear forwards;
+  }
+  @keyframes toastProgress { from { width:100%; } to { width:0%; } }
+
+  .toast-success { background: linear-gradient(135deg, #43a047, #2e7d32); }
+  .toast-error   { background: linear-gradient(135deg, #e53935, #c62828); }
+  .toast-warning { background: linear-gradient(135deg, #fb8c00, #e65100); }
+  .toast-info    { background: linear-gradient(135deg, #1e88e5, #1565c0); }
+
+  /* ═══ Badges y prioridad ═══ */
   .badge-prioridad {
     display: inline-block; background: rgba(255,215,0,0.3); color: #f9a825;
     padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin-left: 0.5rem;
@@ -238,11 +387,126 @@
   .turno-prioridad-cell { text-align: center; }
 </style>
 
+<!-- Toast container (stacked accordion) -->
+<div id="toast-container"></div>
+
 <script>
+// =====================================================================
+//  SISTEMA DE NOTIFICACIONES PUSH (Stacked / Accordion)
+// =====================================================================
+const TOAST_ICONS = {
+  success: 'fa-check',
+  error:   'fa-times',
+  warning: 'fa-exclamation',
+  info:    'fa-info'
+};
+const TOAST_TITLES = {
+  success: 'Éxito',
+  error:   'Error',
+  warning: 'Advertencia',
+  info:    'Información'
+};
+const MAX_TOASTS = 5;
+
+function showToast(message, type = 'info', duration = 4000) {
+  const container = document.getElementById('toast-container');
+  
+  // Limitar la cantidad de toasts visibles (acordeón)
+  const toasts = container.querySelectorAll('.toast-notification:not(.toast-removing)');
+  if (toasts.length >= MAX_TOASTS) {
+    dismissToast(toasts[0]);
+  }
+
+  const toast = document.createElement('div');
+  toast.className = `toast-notification toast-${type}`;
+  toast.style.setProperty('--toast-duration', `${duration}ms`);
+  toast.innerHTML = `
+    <div class="toast-icon"><i class="fas ${TOAST_ICONS[type]}"></i></div>
+    <div class="toast-body">
+      <div class="toast-title">${TOAST_TITLES[type]}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+    <div class="toast-progress"></div>
+  `;
+  toast.onclick = () => dismissToast(toast);
+  container.appendChild(toast);
+
+  // Auto-dismiss
+  setTimeout(() => dismissToast(toast), duration);
+}
+
+function dismissToast(toast) {
+  if (!toast || toast.classList.contains('toast-removing')) return;
+  toast.classList.add('toast-removing');
+  toast.addEventListener('animationend', () => toast.remove(), { once: true });
+}
+
+// =====================================================================
+//  MODAL CONFIRM / PROMPT (reemplazo de alert/confirm/prompt nativos)
+// =====================================================================
+let confirmResolver = null;
+
+function customConfirm(titulo, mensaje, { icon = 'fa-question-circle', iconClass = '', btnText = 'Confirmar', btnColor = '' } = {}) {
+  return new Promise(resolve => {
+    confirmResolver = resolve;
+    const modal = document.getElementById('modal-confirmar');
+    const iconEl = document.getElementById('confirm-modal-icon');
+    document.getElementById('confirm-modal-titulo').textContent = titulo;
+    document.getElementById('confirm-modal-mensaje').textContent = mensaje;
+    iconEl.innerHTML = `<i class="fas ${icon}"></i>`;
+    iconEl.className = `modal-icon ${iconClass}`;
+    const btn = document.getElementById('confirm-modal-btn');
+    btn.textContent = btnText;
+    if (btnColor) btn.style.background = btnColor;
+    else btn.style.background = '';
+    modal.style.display = 'flex';
+  });
+}
+
+function resolverConfirm(value) {
+  document.getElementById('modal-confirmar').style.display = 'none';
+  if (confirmResolver) { confirmResolver(value); confirmResolver = null; }
+}
+
+function cerrarModal(modalId) {
+  document.getElementById(modalId).style.display = 'none';
+  if (modalId === 'modal-motivo') {
+    document.getElementById('motivo-texto').value = '';
+    turnoFinalizandoId = null;
+  }
+  if (modalId === 'modal-derivar') {
+    document.getElementById('derivar-destino').value = '';
+    document.getElementById('derivar-motivo').value = '';
+    turnoDerivandoId = null;
+  }
+}
+
+// Cerrar modales con Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+      if (m.style.display !== 'none') {
+        m.style.display = 'none';
+        if (confirmResolver) { confirmResolver(false); confirmResolver = null; }
+      }
+    });
+  }
+});
+// Cerrar modales al hacer clic fuera
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => {
+    if (e.target === m) {
+      m.style.display = 'none';
+      if (confirmResolver) { confirmResolver(false); confirmResolver = null; }
+    }
+  });
+});
+
 // =====================================================================
 //  ACCIONES DEL OPERADOR — Conectadas al backend via API
 // =====================================================================
 let turnoFinalizandoId = null;
+let turnoDerivandoId = null;
 
 async function apiFetch(url, body = {}) {
   const res = await fetch(url, {
@@ -255,13 +519,11 @@ async function apiFetch(url, body = {}) {
   return data;
 }
 
-// ── Re-llamar turno (volver a mostrar alerta en monitor) ──
+// ── Re-llamar turno ──
 function rellamarTurno(turnoId) {
-  // El turno ya está en LLAMANDO — el monitor lo mostrará en el próximo polling
-  // Aquí podríamos enviar señal WebSocket en el futuro
   const msg = AREA_CONFIG.sonido_llamada
-    ? '🔔 Llamada re-enviada al monitor (sonido habilitado)'
-    : '🔔 Llamada re-enviada al monitor';
+    ? 'Llamada re-enviada al monitor (sonido habilitado)'
+    : 'Llamada re-enviada al monitor';
   showToast(msg, 'info');
 }
 
@@ -269,56 +531,50 @@ function rellamarTurno(turnoId) {
 async function iniciarAtencion(turnoId) {
   try {
     const data = await apiFetch(`/atencion/api/iniciar/${turnoId}/`);
-    showToast(`✅ Atención iniciada — ${data.hora_inicio}`, 'success');
-    setTimeout(() => location.reload(), 800);
+    showToast(`Atención iniciada — ${data.hora_inicio}`, 'success');
+    setTimeout(() => actualizarPanel(), 800);
   } catch (e) {
-    showToast(`❌ ${e.message}`, 'error');
+    showToast(e.message, 'error');
   }
 }
 
-// ── Finalizar atención (con modal si requiere motivo) ──
+// ── Finalizar atención (con modal) ──
 function finalizarAtencion(turnoId) {
   turnoFinalizandoId = turnoId;
-  if (AREA_CONFIG.requiere_motivo_fin) {
-    document.getElementById('modal-motivo').style.display = 'flex';
-    document.getElementById('motivo-texto').focus();
-  } else {
-    // Mostrar modal igual pero como opcional
-    document.getElementById('modal-motivo').style.display = 'flex';
-  }
+  document.getElementById('modal-motivo').style.display = 'flex';
+  setTimeout(() => document.getElementById('motivo-texto').focus(), 150);
 }
 
 async function confirmarFinalizacion() {
   const motivo = document.getElementById('motivo-texto').value.trim();
   if (AREA_CONFIG.requiere_motivo_fin && !motivo) {
-    showToast('⚠️ Debe ingresar un motivo para finalizar', 'warning');
+    showToast('Debe ingresar un motivo para finalizar', 'warning');
     return;
   }
   try {
     await apiFetch(`/atencion/api/finalizar/${turnoFinalizandoId}/`, { motivo });
-    cerrarModal();
-    showToast('✅ Atención finalizada correctamente', 'success');
-    setTimeout(() => location.reload(), 800);
+    cerrarModal('modal-motivo');
+    showToast('Atención finalizada correctamente', 'success');
+    setTimeout(() => actualizarPanel(), 800);
   } catch (e) {
-    showToast(`❌ ${e.message}`, 'error');
+    showToast(e.message, 'error');
   }
-}
-
-function cerrarModal() {
-  document.getElementById('modal-motivo').style.display = 'none';
-  document.getElementById('motivo-texto').value = '';
-  turnoFinalizandoId = null;
 }
 
 // ── No se presentó ──
 async function noPresento(turnoId) {
-  if (!confirm('¿Marcar como "No se presentó"?')) return;
+  const ok = await customConfirm(
+    'No se presentó',
+    '¿Marcar este turno como "No se presentó"?',
+    { icon: 'fa-user-slash', iconClass: 'modal-icon-warning', btnText: 'Sí, marcar', btnColor: 'rgba(255,152,0,0.95)' }
+  );
+  if (!ok) return;
   try {
     await apiFetch(`/atencion/api/no-presento/${turnoId}/`);
-    showToast('⚠️ Turno marcado como no presentado', 'warning');
-    setTimeout(() => location.reload(), 800);
+    showToast('Turno marcado como no presentado', 'warning');
+    setTimeout(() => actualizarPanel(), 800);
   } catch (e) {
-    showToast(`❌ ${e.message}`, 'error');
+    showToast(e.message, 'error');
   }
 }
 
@@ -326,64 +582,57 @@ async function noPresento(turnoId) {
 async function proximoTurno() {
   try {
     const data = await apiFetch('/atencion/api/proximo/');
-    let msg = `🔔 Llamando a ${data.persona} — Turno #${data.numero_visible}`;
+    let msg = `Llamando a ${data.persona} — Turno #${data.numero_visible}`;
     if (data.prioridad > 0) msg += ' ⭐ (prioritario)';
-    showToast(msg, 'success');
-    setTimeout(() => location.reload(), 1200);
+    showToast(msg, 'success', 5000);
+    setTimeout(() => actualizarPanel(), 1200);
   } catch (e) {
-    showToast(`ℹ️ ${e.message}`, 'info');
+    showToast(e.message, 'info');
   }
 }
 
-// ── Derivar turno ──
-async function derivarTurno(turnoId) {
-  const destino = prompt('ID del operador destino:');
-  if (!destino) return;
-  const motivo = prompt('Motivo de la derivación (opcional):');
+// ── Derivar turno (con modal) ──
+function derivarTurno(turnoId) {
+  turnoDerivandoId = turnoId;
+  document.getElementById('modal-derivar').style.display = 'flex';
+  setTimeout(() => document.getElementById('derivar-destino').focus(), 150);
+}
+
+async function confirmarDerivacion() {
+  const destino = document.getElementById('derivar-destino').value.trim();
+  if (!destino) {
+    showToast('Debe ingresar el ID del operador destino', 'warning');
+    return;
+  }
+  const motivo = document.getElementById('derivar-motivo').value.trim();
   try {
-    const data = await apiFetch(`/atencion/api/derivar/${turnoId}/`, {
+    const data = await apiFetch(`/atencion/api/derivar/${turnoDerivandoId}/`, {
       operador_destino_id: parseInt(destino),
       motivo: motivo || '',
     });
-    showToast(`↪️ Turno derivado a ${data.derivado_a}`, 'success');
-    setTimeout(() => location.reload(), 800);
+    cerrarModal('modal-derivar');
+    showToast(`Turno derivado a ${data.derivado_a}`, 'success');
+    setTimeout(() => actualizarPanel(), 800);
   } catch (e) {
-    showToast(`❌ ${e.message}`, 'error');
+    showToast(e.message, 'error');
   }
 }
 
 // ── Seleccionar turno de la lista ──
 async function seleccionarTurno(turnoId) {
-  if (!confirm('¿Llamar a este turno?')) return;
+  const ok = await customConfirm(
+    'Llamar turno',
+    '¿Desea llamar a este turno?',
+    { icon: 'fa-bell', iconClass: 'modal-icon-success', btnText: 'Sí, llamar', btnColor: 'rgba(33,150,243,0.95)' }
+  );
+  if (!ok) return;
   try {
     const data = await apiFetch(`/atencion/api/llamar/${turnoId}/`);
-    showToast(`🔔 Llamando a ${data.persona} — ${data.mesa}`, 'success');
-    setTimeout(() => location.reload(), 1000);
+    showToast(`Llamando a ${data.persona} — ${data.mesa}`, 'success');
+    setTimeout(() => actualizarPanel(), 1000);
   } catch (e) {
-    showToast(`❌ ${e.message}`, 'error');
+    showToast(e.message, 'error');
   }
-}
-
-// ── Toast de notificación ──
-function showToast(message, type = 'info') {
-  const colors = {
-    success: '#4CAF50', error: '#f44336', warning: '#FF9800', info: '#2196F3'
-  };
-  const toast = document.createElement('div');
-  toast.style.cssText = `
-    position:fixed; top:1.5rem; right:1.5rem; z-index:9999;
-    padding:1rem 1.5rem; border-radius:12px; color:#fff;
-    background:${colors[type]}; font-weight:500;
-    box-shadow:0 4px 16px rgba(0,0,0,0.2); max-width:400px;
-    animation: slideIn 0.3s ease-out;
-  `;
-  toast.textContent = message;
-  document.body.appendChild(toast);
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transition = 'opacity 0.3s';
-    setTimeout(() => toast.remove(), 300);
-  }, 3500);
 }
 
 // ── Auto-actualización sin parpadeo ──
@@ -439,10 +688,4 @@ if (document.hidden !== undefined) {
 }
 </script>
 
-<style>
-  @keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-</style>
 {% endblock %}
