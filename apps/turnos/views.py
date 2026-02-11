@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
-from apps.core.models import Tramite, Turno, Area, ConfiguracionArea
+from datetime import timedelta
+from apps.core.models import Tramite, Turno, Area, ConfiguracionArea, LlamadaTurno
 from apps.core import services
 from .forms import SolicitudTurnoForm
 from .services import crear_turno
@@ -83,11 +84,23 @@ def monitor(request):
         'ticket__persona', 'tramite', 'mesa_asignada', 'estado'
     ).order_by("fecha_hora_creacion")
     
+    # Llamadas recientes (últimos 30 segundos) para detección en tiempo real
+    # Incluye tanto LLAMADA como RELLAMADA
+    tiempo_ventana = timezone.now() - timedelta(seconds=30)
+    llamadas_recientes = LlamadaTurno.objects.filter(
+        fecha_hora__gte=tiempo_ventana,
+        turno__estado_id=Turno.LLAMANDO,
+        **({"turno__area": area} if area else {}),
+    ).select_related(
+        'turno__ticket__persona', 'turno__tramite', 'turno__mesa_asignada'
+    ).order_by('-fecha_hora')
+    
     context = {
         'turnos': lista,
         'turnos_llamando': turnos_llamando,
         'turnos_atencion': turnos_atencion,
         'turnos_pendientes': turnos_pendientes,
+        'llamadas_recientes': llamadas_recientes,
         'area': area,
         'config': config,
         'datos_llamada': datos_llamada,

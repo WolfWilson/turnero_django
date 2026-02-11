@@ -7,7 +7,7 @@ import logging
 from .models import (
     Area, Tramite, Mesa, Persona, Ticket, Turno,
     EstadoTicket, EstadoTurno, ConfiguracionArea,
-    TurnoHistorialDerivacion, Usuario,
+    TurnoHistorialDerivacion, Usuario, LlamadaTurno,
 )
 from .services_aportes import buscar_persona_por_dni as buscar_en_aportes
 
@@ -235,7 +235,7 @@ def llamar_turno(turno: Turno, operador: Usuario, mesa: Mesa) -> Turno:
     """
     El operador llama al siguiente turno.
     Cambia estado de PENDIENTE → LLAMANDO y asigna mesa/operador.
-    Respeta ConfiguracionArea.atencion_hora_inicio/fin.
+    Registra el evento de llamada en LlamadaTurno para detección en tiempo real.
     """
     config = ConfiguracionArea.get_for_area(turno.area)
     
@@ -256,8 +256,50 @@ def llamar_turno(turno: Turno, operador: Usuario, mesa: Mesa) -> Turno:
     turno.ticket.estado = estado_ticket_proceso
     turno.ticket.save()
     
+    # Registrar evento de llamada
+    LlamadaTurno.objects.create(
+        turno=turno,
+        fecha_hora=timezone.now(),
+        operador=operador,
+        tipo_llamada=LlamadaTurno.LLAMADA
+    )
+    
+    # Auto-limpieza: eliminar eventos antiguos (mayores a 24 horas)
+    limite_limpieza = timezone.now() - timedelta(hours=24)
+    eliminados = LlamadaTurno.objects.filter(fecha_hora__lt=limite_limpieza).delete()[0]
+    if eliminados > 0:
+        logger.debug(f"Auto-limpieza: {eliminados} eventos de llamada antiguos eliminados")
+    
     logger.info(f"Turno #{turno.id} llamado por {operador} en {mesa}")
     return turno
+
+
+@transaction.atomic
+def rellamar_turno(turno: Turno, operador: Usuario) -> LlamadaTurno:
+    """
+    Re-llama un turno que ya está en estado LLAMANDO.
+    Registra un evento de re-llamada sin modificar el estado del turno.
+    El monitor detecta este evento y muestra la alerta nuevamente.
+    """
+    if turno.estado_id != Turno.LLAMANDO:
+        raise ValueError(f"El turno debe estar en estado LLAMANDO (actual: {turno.estado.nombre})")
+    
+    # Registrar evento de re-llamada
+    llamada = LlamadaTurno.objects.create(
+        turno=turno,
+        fecha_hora=timezone.now(),
+        operador=operador,
+        tipo_llamada=LlamadaTurno.RELLAMADA
+    )
+    
+    # Auto-limpieza: eliminar eventos antiguos (mayores a 24 horas)
+    limite_limpieza = timezone.now() - timedelta(hours=24)
+    eliminados = LlamadaTurno.objects.filter(fecha_hora__lt=limite_limpieza).delete()[0]
+    if eliminados > 0:
+        logger.debug(f"Auto-limpieza: {eliminados} eventos de llamada antiguos eliminados")
+    
+    logger.info(f"Turno #{turno.id} re-llamado por {operador}")
+    return llamada
 
 
 @transaction.atomic
@@ -279,9 +321,15 @@ def iniciar_atencion(turno: Turno) -> Turno:
 
 
 @transaction.atomic
-def finalizar_atencion(turno: Turno, motivo: str | None = None) -> Turno:
+def finalizar_atencion(
+    turno: Turno,
+    motivo_cierre_id: int | None = None,
+    prioridad_consulta: int = 0,
+    observaciones: str | None = None
+) -> Turno:
     """
     Pasa turno de EN_ATENCION → FINALIZADO.
+    Registra motivo de cierre (configurable), prioridad de consulta y observaciones.
     Respeta ConfiguracionArea.requiere_motivo_fin.
     """
     config = ConfiguracionArea.get_for_area(turno.area)
@@ -290,12 +338,22 @@ def finalizar_atencion(turno: Turno, motivo: str | None = None) -> Turno:
         raise ValueError(f"El turno debe estar EN_ATENCION (actual: {turno.estado.nombre})")
     
     # ── Validar motivo si es requerido ──
-    if config.requiere_motivo_fin and not motivo:
-        raise ValueError("Se requiere un motivo para finalizar el turno")
+    if config.requiere_motivo_fin and not motivo_cierre_id:
+        raise ValueError("Se requiere un motivo de cierre para finalizar el turno")
+    
+    # Validar que el motivo existe y está activo
+    motivo_obj = None
+    if motivo_cierre_id:
+        try:
+            motivo_obj = MotivoCierre.objects.get(pk=motivo_cierre_id, activo=True)
+            turno.motivo_cierre = motivo_obj
+        except MotivoCierre.DoesNotExist:
+            raise ValueError(f"Motivo de cierre ID {motivo_cierre_id} no existe o no está activo")
     
     estado_finalizado = EstadoTurno.objects.get(pk=Turno.FINALIZADO)
     turno.estado = estado_finalizado
-    turno.motivo_real = motivo
+    turno.prioridad_consulta = prioridad_consulta
+    turno.observaciones = observaciones
     turno.fecha_hora_fin_atencion = timezone.now()
     turno.save()
     
@@ -304,7 +362,22 @@ def finalizar_atencion(turno: Turno, motivo: str | None = None) -> Turno:
     turno.ticket.estado = estado_ticket_completado
     turno.ticket.save()
     
-    logger.info(f"Turno #{turno.id} finalizado. Motivo: {motivo or 'N/A'}")
+    motivo_nombre = motivo_obj.nombre if motivo_obj else 'N/A'
+    logger.info(
+        f"Turno #{turno.id} finalizado. "
+        f"Motivo: {motivo_nombre}, Prioridad: {prioridad_consulta}, "
+        f"Obs: {observaciones[:50] if observaciones else 'N/A'}"
+    )
+    return turno
+    turno.ticket.estado = estado_ticket_completado
+    turno.ticket.save()
+    
+    motivo_nombre = motivo_obj.nombre if motivo_cierre_id else 'N/A'
+    logger.info(
+        f"Turno #{turno.id} finalizado. "
+        f"Motivo: {motivo_nombre}, Prioridad: {prioridad_consulta}, "
+        f"Obs: {observaciones[:50] if observaciones else 'N/A'}"
+    )
     return turno
 
 

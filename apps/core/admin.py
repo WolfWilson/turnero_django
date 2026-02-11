@@ -19,6 +19,7 @@ from .models import (
     Turno,
     ConfiguracionArea,
     ConfiguracionAreaHistorial,
+    MotivoCierre,
 )
 
 
@@ -277,3 +278,21 @@ class ConfiguracionAreaAdmin(admin.ModelAdmin):
                 pass
 
         super().save_model(request, obj, form, change)
+
+
+# ───────────────────────────────
+#   MotivoCierre Admin
+# ───────────────────────────────
+@admin.register(MotivoCierre)
+class MotivoCierreAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'activo', 'orden', 'descripcion')
+    list_filter = ('activo',)
+    search_fields = ('nombre', 'descripcion')
+    list_editable = ('activo', 'orden')
+    ordering = ('orden', 'nombre')
+    
+    fieldsets = (
+        (None, {
+            'fields': ('nombre', 'descripcion', 'activo', 'orden')
+        }),
+    )

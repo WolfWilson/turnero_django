@@ -20,6 +20,11 @@
     mensajePantalla: "{{ config.mensaje_pantalla|default:'Bienvenido'|escapejs }}",
     mediaHabilitada: {{ config.media_habilitada|yesno:"true,false" }},
   };
+  
+  // IDs de llamadas ya mostradas (para evitar duplicados en la misma sesión)
+  const LLAMADAS_MOSTRADAS = new Set([
+    {% for llamada in llamadas_recientes %}{{ llamada.id }},{% endfor %}
+  ]);
 </script>
 
 <div class="monitor-grid">
@@ -212,11 +217,6 @@
 
   /* ===== Auto-actualización sin parpadeo ============================= */
   let refreshInterval = null;
-  
-  // Rastrear IDs de turnos ya alertados para no repetir alertas
-  let alertedTurnoIds = new Set(
-    [...document.querySelectorAll('[data-estado="llamando"]')].map(el => el.dataset.turnoId)
-  );
 
   async function actualizarMonitor() {
     try {
@@ -229,23 +229,41 @@
       const parser = new DOMParser();
       const newDoc = parser.parseFromString(html, 'text/html');
       
-      // Detectar nuevos turnos LLAMANDO para disparar alerta
-      const nuevosTurnosLlamando = newDoc.querySelectorAll('[data-estado="llamando"]');
-      const nuevosAlerts = [];
-      nuevosTurnosLlamando.forEach(el => {
-        const tid = el.dataset.turnoId;
-        if (!alertedTurnoIds.has(tid)) {
-          alertedTurnoIds.add(tid);
-          const nombre = el.querySelector('.turno')?.textContent?.split('|')[0]?.trim() || '';
-          const box = el.querySelector('.box')?.textContent?.trim() || '';
-          const tramite = el.querySelector('.turno')?.textContent?.split('|')[1]?.trim() || '';
-          nuevosAlerts.push({ nombre, box, tramite });
-        }
-      });
+      // Extraer script con LLAMADAS_MOSTRADAS del nuevo documento
+      const scriptContent = newDoc.querySelector('script')?.textContent || '';
+      const match = scriptContent.match(/LLAMADAS_MOSTRADAS = new Set\(\[([\d,\s]*)\]\)/);
       
-      // Disparar alerta visual/sonora si hay nuevos llamados
-      if (nuevosAlerts.length > 0) {
-        showAlert(nuevosAlerts);
+      if (match) {
+        // IDs de llamadas recientes del servidor
+        const llamadasRecientesStr = match[1].trim();
+        const nuevasLlamadasIds = llamadasRecientesStr 
+          ? llamadasRecientesStr.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+          : [];
+        
+        // Detectar llamadas que no hemos mostrado aún
+        const llamadasNuevas = nuevasLlamadasIds.filter(id => !LLAMADAS_MOSTRADAS.has(id));
+        
+        if (llamadasNuevas.length > 0) {
+          // Obtener datos de los turnos llamados desde el DOM
+          const alertData = [];
+          llamadasNuevas.forEach(llamadaId => {
+            // Buscar el turno correspondiente en el DOM nuevo
+            const turnoEl = newDoc.querySelector('[data-estado="llamando"]');
+            if (turnoEl) {
+              const nombre = turnoEl.querySelector('.turno')?.textContent?.split('|')[0]?.trim() || '';
+              const box = turnoEl.querySelector('.box')?.textContent?.trim() || '';
+              const tramite = turnoEl.querySelector('.turno')?.textContent?.split('|')[1]?.trim() || '';
+              alertData.push({ nombre, box, tramite });
+            }
+            // Marcar como mostrada
+            LLAMADAS_MOSTRADAS.add(llamadaId);
+          });
+          
+          // Disparar alerta visual/sonora
+          if (alertData.length > 0) {
+            showAlert(alertData);
+          }
+        }
       }
       
       // Actualizar lista de turnos solo si hay cambios

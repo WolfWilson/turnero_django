@@ -334,6 +334,25 @@ class Ticket(models.Model):
 
 
 # -----------------------------------------------
+# 6.1 MotivoCierre (configurable desde admin)
+# -----------------------------------------------
+class MotivoCierre(models.Model):
+    id          = models.AutoField(primary_key=True, db_column="IdMotivoCierre")
+    nombre      = models.CharField(max_length=100, unique=True, db_column="Nombre")
+    descripcion = models.CharField(max_length=255, blank=True, db_column="Descripcion")
+    activo      = models.BooleanField(default=True, db_column="Activo")
+    orden       = models.SmallIntegerField(default=0, db_column="Orden")
+
+    class Meta:
+        managed  = True
+        db_table = "MotivoCierre"
+        ordering = ["orden", "nombre"]
+
+    def __str__(self):
+        return self.nombre
+
+
+# -----------------------------------------------
 # 7. Turno
 # -----------------------------------------------
 class Turno(models.Model):
@@ -369,6 +388,13 @@ class Turno(models.Model):
         db_column="FkIdOperador", related_name="turnos_atendidos",
     )
     motivo_real                = models.CharField(max_length=2000, null=True, blank=True, db_column="MotivoReal")
+    motivo_cierre              = models.ForeignKey(
+        MotivoCierre, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        db_column="FkIdMotivoCierre", related_name="turnos",
+    )
+    prioridad_consulta         = models.SmallIntegerField(default=0, db_column="PrioridadConsulta")
+    observaciones              = models.TextField(null=True, blank=True, db_column="Observaciones")
     fecha_hora_inicio_atencion = models.DateTimeField(null=True, blank=True, db_column="FechaHoraInicioAtencion")
     fecha_hora_fin_atencion    = models.DateTimeField(null=True, blank=True, db_column="FechaHoraFinAtencion")
 
@@ -398,7 +424,54 @@ class Turno(models.Model):
 
 
 # -----------------------------------------------
-# 8. TurnoHistorialDerivacion
+# 8. LlamadaTurno - Registro de llamadas y re-llamadas
+# -----------------------------------------------
+class LlamadaTurno(models.Model):
+    """
+    Registra cada vez que un turno es llamado o re-llamado.
+    Permite al monitor detectar nuevas llamadas sin modificar el turno.
+    Se usa para auditoría y para sincronización en tiempo real.
+    """
+    LLAMADA = 'LLAMADA'
+    RELLAMADA = 'RELLAMADA'
+    TIPO_CHOICES = [
+        (LLAMADA, 'Primera Llamada'),
+        (RELLAMADA, 'Re-llamada'),
+    ]
+    
+    id = models.AutoField(primary_key=True, db_column="IdLlamadaTurno")
+    turno = models.ForeignKey(
+        Turno, on_delete=models.CASCADE,
+        db_column="FkIdTurno", related_name="llamadas",
+    )
+    fecha_hora = models.DateTimeField(db_column="FechaHoraLlamada", db_index=True)
+    operador = models.ForeignKey(
+        Usuario, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        db_column="FkIdOperador", related_name="llamadas_realizadas",
+    )
+    tipo_llamada = models.CharField(
+        max_length=20,
+        choices=TIPO_CHOICES,
+        default=LLAMADA,
+        db_column="TipoLlamada"
+    )
+
+    class Meta:
+        managed = True
+        db_table = "LlamadaTurno"
+        ordering = ["-fecha_hora"]
+        indexes = [
+            models.Index(fields=['turno', '-fecha_hora'], name='idx_llamada_turno_fecha'),
+            models.Index(fields=['-fecha_hora'], name='idx_llamada_fecha'),
+        ]
+
+    def __str__(self):
+        return f"{self.tipo_llamada} - Turno #{self.turno_id} - {self.fecha_hora.strftime('%H:%M:%S')}"
+
+
+# -----------------------------------------------
+# 9. TurnoHistorialDerivacion
 # -----------------------------------------------
 class TurnoHistorialDerivacion(models.Model):
     id    = models.AutoField(primary_key=True, db_column="IdTurnoHistorialDerivacion")
@@ -426,7 +499,7 @@ class TurnoHistorialDerivacion(models.Model):
 
 
 # -----------------------------------------------
-# 9. ConfiguracionArea (campos estructurados)
+# 10. ConfiguracionArea (campos estructurados)
 # -----------------------------------------------
 class ConfiguracionArea(models.Model):
     id   = models.AutoField(primary_key=True, db_column="IdConfiguracionArea")

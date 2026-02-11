@@ -8,6 +8,7 @@ urlpatterns = [
 
     # API endpoints para acciones del operador
     path("api/llamar/<int:turno_id>/",     views.api_llamar_turno,     name="api_llamar"),
+    path("api/rellamar/<int:turno_id>/",   views.api_rellamar_turno,   name="api_rellamar"),
     path("api/iniciar/<int:turno_id>/",    views.api_iniciar_atencion, name="api_iniciar"),
     path("api/finalizar/<int:turno_id>/",  views.api_finalizar_atencion, name="api_finalizar"),
     path("api/no-presento/<int:turno_id>/", views.api_no_presento,     name="api_no_presento"),

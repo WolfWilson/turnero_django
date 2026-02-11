@@ -109,7 +109,8 @@ def main():
     
     # Verificar resultado
     cursor.execute("SELECT COUNT(*) FROM ConfiguracionArea")
-    count = cursor.fetchone()[0]
+    result = cursor.fetchone()
+    count = result[0] if result else 0
     print(f"\n{'=' * 60}")
     print(f"  ✓ Migración completada. {count} configuración(es) creada(s).")
     

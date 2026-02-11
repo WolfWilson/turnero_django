@@ -1,11 +1,14 @@
 import json
+import logging
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
-from apps.core.models import Usuario, UsuarioRol, Turno, Mesa, Area, ConfiguracionArea
+from apps.core.models import Usuario, UsuarioRol, Turno, Mesa, Area, ConfiguracionArea, MotivoCierre
 from apps.core import services
+
+logger = logging.getLogger(__name__)
 
 
 def es_operador(user):
@@ -71,6 +74,9 @@ def panel_mesa(request):
         **area_filter,
     ).count()
     
+    # Motivos de cierre activos para el select del modal
+    motivos_cierre = MotivoCierre.objects.filter(activo=True).order_by('orden', 'nombre')
+    
     context = {
         'turno_actual': turno_actual,
         'turnos_pendientes': turnos_pendientes,
@@ -80,6 +86,7 @@ def panel_mesa(request):
         'config': config,
         'config_json': json.dumps(config),  # JSON válido para JS
         'horario_atencion': horario_atencion,
+        'motivos_cierre': motivos_cierre,
     }
     
     return render(request, "operador/panel.html", context)
@@ -136,17 +143,30 @@ def api_iniciar_atencion(request, turno_id):
 @user_passes_test(es_operador)
 @require_POST
 def api_finalizar_atencion(request, turno_id):
-    """POST /atencion/api/finalizar/<turno_id>/"""
+    """POST /atencion/api/finalizar/<turno_id>/
+    Body: {
+        motivo_cierre_id: int (ID de MotivoCierre),
+        prioridad_consulta: int (0=Normal, 1=Abierta, 2=Urgente),
+        observaciones: str
+    }
+    """
     try:
         data = json.loads(request.body) if request.body else {}
     except json.JSONDecodeError:
         data = {}
     
-    motivo = data.get('motivo', '').strip() or None
+    motivo_cierre_id = data.get('motivo_cierre_id')
+    prioridad_consulta = data.get('prioridad_consulta', 0)
+    observaciones = data.get('observaciones', '').strip() or None
     
     try:
         turno = Turno.objects.select_related('estado', 'area').get(pk=turno_id)
-        turno = services.finalizar_atencion(turno, motivo)
+        turno = services.finalizar_atencion(
+            turno,
+            motivo_cierre_id=motivo_cierre_id,
+            prioridad_consulta=prioridad_consulta,
+            observaciones=observaciones
+        )
         return JsonResponse({
             'ok': True,
             'turno_id': turno.id,
@@ -235,3 +255,41 @@ def api_derivar_turno(request, turno_id):
         })
     except (Turno.DoesNotExist, Usuario.DoesNotExist, ValueError) as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@user_passes_test(es_operador)
+@require_POST
+def api_rellamar_turno(request, turno_id):
+    """POST /atencion/api/rellamar/<turno_id>/
+    
+    Re-llama un turno que ya está en estado LLAMANDO.
+    Registra un evento de re-llamada que el monitor detectará automáticamente.
+    """
+    usuario = _get_usuario(request)
+    
+    try:
+        turno = Turno.objects.select_related(
+            'estado', 'ticket__persona', 'mesa_asignada', 'tramite'
+        ).get(pk=turno_id)
+        
+        # Llamar al servicio que registra la re-llamada
+        services.rellamar_turno(turno, usuario)
+        
+        persona_nombre = turno.ticket.persona.nombre_completo if turno.ticket.persona else f"N° {turno.numero_visible}"
+        mesa_nombre = turno.mesa_asignada.nombre if turno.mesa_asignada else '-'
+        
+        return JsonResponse({
+            'ok': True,
+            'turno_id': turno.id,
+            'persona': persona_nombre,
+            'mesa': mesa_nombre,
+            'tramite': turno.tramite.nombre,
+        })
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except Turno.DoesNotExist:
+        return JsonResponse({'error': 'Turno no encontrado'}, status=404)
+    except Exception as e:
+        logger.error(f"Error en rellamar turno: {e}")
+        return JsonResponse({'error': 'Error interno del servidor'}, status=500)
