@@ -549,6 +549,66 @@
 }
 
 /* ============================================================
+   ANIMACIONES DE ACTUALIZACIÓN (ANTI-PARPADEO)
+   ============================================================ */
+
+/* Animación sutil durante la actualización */
+.stat-value.updating {
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+/* Efecto de "flash" cuando cambia un valor */
+.stat-value.value-changed {
+  animation: valueFlash 1s ease;
+}
+
+@keyframes valueFlash {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+    color: var(--color-primary);
+  }
+}
+
+/* Indicador de última actualización */
+.refresh-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  padding: var(--space-xs) var(--space-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  margin-left: auto;
+}
+
+.refresh-indicator i {
+  animation: rotate 2s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Transición suave para todos los valores numéricos */
+.stat-value,
+.turno-number {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 1200px) {

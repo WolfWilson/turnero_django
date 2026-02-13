@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render
 from django.utils import timezone
+from django.http import JsonResponse
 from apps.core.models import Turno, Usuario, UsuarioRol
 
 
@@ -17,18 +18,14 @@ def es_director(user):
         return False
 
 
-@login_required
-@user_passes_test(es_director)
-def dashboard_admin(request):
-    """Resumen general para el director."""
+def get_dashboard_stats():
+    """Obtiene las estadísticas del dashboard."""
     hoy = timezone.localdate()
 
-    # Pendientes de HOY (emitidos hoy, aún no atendidos)
     pendientes_hoy = Turno.objects.filter(
         estado_id=Turno.PENDIENTE, fecha_turno=hoy
     ).count()
 
-    # Vencidos: pendientes de días anteriores que nunca se atendieron
     pendientes_vencidos = Turno.objects.filter(
         estado_id=Turno.PENDIENTE, fecha_turno__lt=hoy
     ).count()
@@ -46,6 +43,17 @@ def dashboard_admin(request):
         pendientes_hoy + stats["en_atencion"] + stats["llamando"]
         + stats["finalizados"] + stats["no_presento"]
     )
+    return stats
+
+
+@login_required
+@user_passes_test(es_director)
+def dashboard_admin(request):
+    """Resumen general para el director."""
+    hoy = timezone.localdate()
+
+    # Obtener estadísticas
+    stats = get_dashboard_stats()
 
     # Turnos recientes (últimos 10 del día, cualquier estado)
     turnos_recientes = (
@@ -59,3 +67,11 @@ def dashboard_admin(request):
         "admin/dashboard_admin.html",
         {"stats": stats, "turnos_recientes": turnos_recientes, "hoy": hoy},
     )
+
+
+@login_required
+@user_passes_test(es_director)
+def dashboard_stats_api(request):
+    """API endpoint para actualización de estadísticas del dashboard."""
+    stats = get_dashboard_stats()
+    return JsonResponse(stats)

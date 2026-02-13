@@ -787,19 +787,51 @@ function actualizarSiDifiere(sectionId, newDoc) {
 }
 
 // Iniciar polling inteligente
-refreshInterval = setInterval(actualizarPanel, 5000);
+// NOTA: El polling está comentado porque usamos WebSocket para actualizaciones en tiempo real
+// refreshInterval = setInterval(actualizarPanel, 5000);
 
 // Pausar polling cuando la pestaña está oculta (optimización)
 if (document.hidden !== undefined) {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      clearInterval(refreshInterval);
+      // clearInterval(refreshInterval);
     } else {
-      refreshInterval = setInterval(actualizarPanel, 5000);
-      actualizarPanel(); // Actualizar inmediatamente al volver
+      // refreshInterval = setInterval(actualizarPanel, 5000);
+      // actualizarPanel(); // Actualizar inmediatamente al volver
     }
   });
 }
 </script>
+
+<!-- WebSocket Scripts para actualizaciones en tiempo real -->
+{% load static %}
+<script src=\"{% static 'js/turnos-websocket.js' %}\"></script>
+<script src=\"{% static 'js/operador-websocket.js' %}\"></script>
+
+<!-- CSS adicional para animaciones WebSocket -->
+<style>
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+  .nuevo-turno-flash {
+    animation: turnoFlash 0.5s ease 4;
+  }
+  @keyframes turnoFlash {
+    0%, 100% { background-color: rgba(255, 255, 255, 0.05); }
+    50% { background-color: rgba(33, 150, 243, 0.2); }
+  }
+  .actualizado {
+    animation: actualizadoFlash 1s ease;
+  }
+  @keyframes actualizadoFlash {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); background-color: rgba(76, 175, 80, 0.1); }
+  }
+</style>
 
 {% endblock %}

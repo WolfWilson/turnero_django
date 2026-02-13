@@ -8,8 +8,16 @@
     <span class="breadcrumb-separator">/</span>
     <span>Dashboard</span>
   </div>
-  <h1 class="content-title">Panel de Control</h1>
-  <p class="content-subtitle">Bienvenido, {{ request.user.get_full_name|default:request.user.username }}</p>
+  <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div>
+      <h1 class="content-title">Panel de Control</h1>
+      <p class="content-subtitle">Bienvenido, {{ request.user.get_full_name|default:request.user.username }}</p>
+    </div>
+    <div class="refresh-indicator">
+      <i class="fas fa-sync-alt"></i>
+      <span>Última actualización: <strong id="last-refresh-time">--:--:--</strong></span>
+    </div>
+  </div>
 </div>
 
 <!-- Estadísticas principales -->
@@ -29,7 +37,7 @@
       </div>
     </div>
     <div class="stat-card-body">
-      <div class="stat-value">{{ stats.pendientes }}</div>
+      <div class="stat-value" id="stat-pendientes">{{ stats.pendientes }}</div>
       <p class="stat-description">Turnos Pendientes</p>
     </div>
   </div>
@@ -49,7 +57,7 @@
       </div>
     </div>
     <div class="stat-card-body">
-      <div class="stat-value" style="color: var(--color-success);">{{ stats.en_atencion|add:stats.llamando }}</div>
+      <div class="stat-value" id="stat-en-atencion" style="color: var(--color-success);">{{ stats.en_atencion|add:stats.llamando }}</div>
       <p class="stat-description">En Atención Ahora</p>
     </div>
   </div>
@@ -65,7 +73,7 @@
       </div>
     </div>
     <div class="stat-card-body">
-      <div class="stat-value" style="color: var(--color-info);">{{ stats.finalizados }}</div>
+      <div class="stat-value" id="stat-finalizados" style="color: var(--color-info);">{{ stats.finalizados }}</div>
       <p class="stat-description">Turnos Completados</p>
     </div>
   </div>
@@ -81,7 +89,7 @@
       </div>
     </div>
     <div class="stat-card-body">
-      <div class="stat-value" style="color: var(--color-warning);">{{ stats.pendientes_vencidos }}</div>
+      <div class="stat-value" id="stat-vencidos" style="color: var(--color-warning);">{{ stats.pendientes_vencidos }}</div>
       <p class="stat-description">Turnos Vencidos</p>
     </div>
   </div>
@@ -97,7 +105,7 @@
       </div>
     </div>
     <div class="stat-card-body">
-      <div class="stat-value" style="color: var(--color-danger);">{{ stats.no_presento }}</div>
+      <div class="stat-value" id="stat-no-presento" style="color: var(--color-danger);">{{ stats.no_presento }}</div>
       <p class="stat-description">No se Presentaron</p>
     </div>
   </div>
@@ -295,4 +303,7 @@
   .turno-estado.derivado     { background: rgba(156,39,176,0.15); color: #9c27b0; }
   .dashboard-stats { flex-wrap: wrap; }
 </style>
+
+<!-- Script de actualización automática -->\n{% load static %}
+<script src="{% static 'js/dashboard-refresh.js' %}"></script>
 {% endblock %}
