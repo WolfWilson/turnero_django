@@ -4,70 +4,76 @@
    ============================================================ */
 
 /* ============================================================
-   FONDO ANIMADO CON GRADIENTE Y OLAS
+   FONDO ANIMADO CON GRADIENTE Y OLAS NEÓN
    ============================================================ */
 .dashboard-layout {
   margin: auto;
   overflow: auto;
-  background: linear-gradient(315deg, rgba(30,0,28,1) 3%, rgba(20,50,90,1) 38%, rgba(15,80,75,1) 68%, rgba(80,10,10,1) 98%);
-  animation: gradient 15s ease infinite;
+  background: linear-gradient(135deg, #1e0a3c 0%, #2d1b5e 25%, #1a1a4e 50%, #0f0a2e 75%, #1e0a3c 100%);
+  animation: gradientShift 20s ease infinite;
   background-size: 400% 400%;
   background-attachment: fixed;
+  position: relative;
 }
 
-@keyframes gradient {
-  0% {
-    background-position: 0% 0%;
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
   }
   50% {
-    background-position: 100% 100%;
-  }
-  100% {
-    background-position: 0% 0%;
+    background-position: 100% 50%;
   }
 }
 
+/* Olas con efecto neón */
 .wave {
-  background: rgb(255 255 255 / 25%);
-  border-radius: 1000% 1000% 0 0;
   position: fixed;
-  width: 200%;
-  height: 12em;
-  animation: wave 10s -3s linear infinite;
-  transform: translate3d(0, 0, 0);
-  opacity: 0.8;
   bottom: 0;
   left: 0;
-  z-index: -1;
+  width: 200%;
+  height: 200px;
+  background: transparent;
+  border-top: 3px solid rgba(0, 255, 255, 0.5);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  animation: waveFloat 12s ease-in-out infinite;
+  z-index: 0;
+  box-shadow: 0 -5px 25px rgba(0, 255, 255, 0.4),
+              0 -10px 50px rgba(0, 255, 255, 0.2);
+  filter: blur(1px);
 }
 
 .wave:nth-of-type(2) {
-  bottom: -1.25em;
-  animation: wave 18s linear reverse infinite;
-  opacity: 0.8;
+  bottom: 50px;
+  height: 250px;
+  border-top-color: rgba(138, 43, 226, 0.4);
+  animation: waveFloat 15s ease-in-out infinite reverse;
+  animation-delay: -5s;
+  box-shadow: 0 -5px 25px rgba(138, 43, 226, 0.3),
+              0 -10px 50px rgba(138, 43, 226, 0.15);
 }
 
 .wave:nth-of-type(3) {
-  bottom: -2.5em;
-  animation: wave 20s -1s reverse infinite;
-  opacity: 0.9;
+  bottom: 100px;
+  height: 180px;
+  border-top-color: rgba(255, 0, 255, 0.3);
+  animation: waveFloat 18s ease-in-out infinite;
+  animation-delay: -10s;
+  box-shadow: 0 -5px 25px rgba(255, 0, 255, 0.25),
+              0 -10px 50px rgba(255, 0, 255, 0.1);
 }
 
-@keyframes wave {
-  2% {
-    transform: translateX(1);
+@keyframes waveFloat {
+  0%, 100% {
+    transform: translateX(0) translateY(0);
   }
   25% {
-    transform: translateX(-25%);
+    transform: translateX(-15%) translateY(-10px);
   }
   50% {
-    transform: translateX(-50%);
+    transform: translateX(-30%) translateY(0);
   }
   75% {
-    transform: translateX(-25%);
-  }
-  100% {
-    transform: translateX(1);
+    transform: translateX(-15%) translateY(10px);
   }
 }
 
