@@ -101,6 +101,11 @@ def monitor(request):
         'turnos_atencion': turnos_atencion,
         'turnos_pendientes': turnos_pendientes,
         'llamadas_recientes': llamadas_recientes,
+        'total_activos': Turno.objects.filter(
+            fecha_turno=hoy,
+            estado_id__in=[Turno.PENDIENTE, Turno.LLAMANDO, Turno.EN_ATENCION],
+            **({"area": area} if area else {}),
+        ).count(),
         'area': area,
         'config': config,
         'datos_llamada': datos_llamada,
