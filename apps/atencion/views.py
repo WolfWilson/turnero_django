@@ -135,7 +135,7 @@ def api_iniciar_atencion(request, turno_id):
             'ok': True,
             'turno_id': turno.id,
             'estado': turno.estado.nombre,
-            'hora_inicio': turno.fecha_hora_inicio_atencion.strftime('%H:%M:%S'),
+            'hora_inicio': turno.fecha_hora_inicio_atencion.strftime('%H:%M:%S') if turno.fecha_hora_inicio_atencion else None,
         })
     except (Turno.DoesNotExist, ValueError) as e:
         return JsonResponse({'error': str(e)}, status=400)
@@ -253,7 +253,9 @@ def api_derivar_turno(request, turno_id):
         return JsonResponse({'error': 'Debe indicar el operador destino'}, status=400)
     
     usuario = _get_usuario(request)
-    
+    if not usuario:
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=400)
+
     try:
         turno = Turno.objects.select_related('estado', 'area').get(pk=turno_id)
         operador_destino = Usuario.objects.get(pk=operador_destino_id)
@@ -277,7 +279,9 @@ def api_rellamar_turno(request, turno_id):
     Registra un evento de re-llamada que el monitor detectará automáticamente.
     """
     usuario = _get_usuario(request)
-    
+    if not usuario:
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=400)
+
     try:
         turno = Turno.objects.select_related(
             'estado', 'ticket__persona', 'mesa_asignada', 'tramite'
