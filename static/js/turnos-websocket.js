@@ -58,7 +58,7 @@ class TurnosWebSocket {
      * Handler cuando se establece la conexión
      */
     onOpen(event) {
-        this.log('✓ WebSocket conectado');
+        console.log('[TurnosWS] ✓ WebSocket CONECTADO exitosamente');
         this.isConnected = true;
         this.reconnectAttempts = 0;
         
@@ -76,7 +76,7 @@ class TurnosWebSocket {
     onMessage(event) {
         try {
             const data = JSON.parse(event.data);
-            this.log('← Mensaje recibido:', data);
+            this.log('← Mensaje recibido:', data.type, data);
             
             // Despachar según el tipo de mensaje
             switch (data.type) {
@@ -86,43 +86,43 @@ class TurnosWebSocket {
                     
                 case 'turno_creado':
                     if (this.options.onTurnoCreado) {
-                        this.options.onTurnoCreado(data.turno, data.timestamp);
+                        this.options.onTurnoCreado(data);
                     }
                     break;
                     
                 case 'turno_llamado':
                     if (this.options.onTurnoLlamado) {
-                        this.options.onTurnoLlamado(data.turno, data.mesa, data.timestamp);
+                        this.options.onTurnoLlamado(data);
                     }
                     break;
                     
                 case 'turno_atendiendo':
                     if (this.options.onTurnoAtendiendo) {
-                        this.options.onTurnoAtendiendo(data.turno, data.mesa, data.timestamp);
+                        this.options.onTurnoAtendiendo(data);
                     }
                     break;
                     
                 case 'turno_finalizado':
                     if (this.options.onTurnoFinalizado) {
-                        this.options.onTurnoFinalizado(data.turno, data.motivo, data.timestamp);
+                        this.options.onTurnoFinalizado(data);
                     }
                     break;
                     
                 case 'turno_no_presento':
                     if (this.options.onTurnoNoPresento) {
-                        this.options.onTurnoNoPresento(data.turno, data.timestamp);
+                        this.options.onTurnoNoPresento(data);
                     }
                     break;
                     
                 case 'turno_actualizado':
                     if (this.options.onTurnoActualizado) {
-                        this.options.onTurnoActualizado(data.turno, data.cambios, data.timestamp);
+                        this.options.onTurnoActualizado(data);
                     }
                     break;
                     
                 case 'stats_actualizadas':
                     if (this.options.onStatsActualizadas) {
-                        this.options.onStatsActualizadas(data.stats, data.timestamp);
+                        this.options.onStatsActualizadas(data);
                     }
                     break;
                     
@@ -143,7 +143,7 @@ class TurnosWebSocket {
      * Handler para errores
      */
     onError(event) {
-        this.log('✗ Error en WebSocket:', event);
+        console.error('[TurnosWS] ✗ ERROR en WebSocket:', event);
         this.isConnected = false;
         
         if (this.options.onError) {
@@ -157,7 +157,7 @@ class TurnosWebSocket {
      * Handler cuando se cierra la conexión
      */
     onClose(event) {
-        this.log('WebSocket cerrado:', event.code, event.reason);
+        console.warn('[TurnosWS] WebSocket CERRADO:', event.code, event.reason, event.wasClean ? '(limpio)' : '(inesperado)');
         this.isConnected = false;
         
         if (this.options.onDisconnected) {

@@ -27,74 +27,147 @@
   ]);
 </script>
 
-<div class="monitor-grid">
-  <!-- Lista principal -->
-  <section class="turn-list" aria-label="Turnos en pantalla">
-    <header class="turn-header">
-      <span class="col-bell"></span>
-      <span class="col-turno">TURNO</span>
-      <time id="clock" aria-label="Hora actual"></time>
-      <span class="col-box">BOX</span>
-    </header>
-    
-    <div id="turnos-llamando-container">
-    <ul id="turn-container">
-      {# Turnos llamando (con alerta visual - primero para que aparezcan arriba) #}
-      {% for t in turnos_llamando %}
-        <li class="turn-card active" data-turno-id="{{ t.id }}" data-estado="llamando">
-          <span class="material-icons-outlined bell">notifications_active</span>
-          <span class="turno">
-            {% if t.ticket.persona %}{{ t.ticket.persona.nombre_completo }}{% else %}N° {{ t.numero_visible }}{% endif %}
-            | {{ t.tramite.nombre }}
-          </span>
-          <span class="box">{% if t.mesa_asignada %}{{ t.mesa_asignada.nombre }}{% else %}-{% endif %}</span>
-        </li>
-      {% endfor %}
-      
-      {# Turnos en atención #}
-      {% for t in turnos_atencion %}
-        <li class="turn-card" data-turno-id="{{ t.id }}" data-estado="atencion">
-          <span class="material-icons-outlined bell">person</span>
-          <span class="turno">
-            {% if t.ticket.persona %}{{ t.ticket.persona.nombre_completo }}{% else %}N° {{ t.numero_visible }}{% endif %}
-            | {{ t.tramite.nombre }}
-          </span>
-          <span class="box">{% if t.mesa_asignada %}{{ t.mesa_asignada.nombre }}{% else %}-{% endif %}</span>
-        </li>
-      {% endfor %}
-      
-      {# Turnos pendientes (en espera) #}
-      {% for t in turnos_pendientes %}
-        <li class="turn-card turn-pending" data-turno-id="{{ t.id }}" data-estado="pendiente">
-          <span class="material-icons-outlined bell">schedule</span>
-          <span class="turno">
-            {% if t.ticket.persona %}{{ t.ticket.persona.nombre_completo }}{% else %}N° {{ t.numero_visible }}{% endif %}
-            | {{ t.tramite.nombre }}
-          </span>
-          <span class="box">En espera</span>
-        </li>
-      {% endfor %}
-      
-      {% if not turnos_atencion and not turnos_llamando and not turnos_pendientes %}
-        <li class="turn-empty">No hay turnos en atención</li>
-      {% endif %}
-    </ul>
+<div class="monitor-container" id="monitor-container">
+  <!-- Encabezado del área -->
+  <header class="monitor-header">
+    <div class="area-info">
+      <i class="fas fa-building"></i>
+      <h1 class="area-nombre">{{ area.nombre|default:"Sistema de Turnos" }}</h1>
     </div>
-    
-    <div id="turnos-atencion-container">
-    {# Mensaje configurable del área #}
-    <div class="monitor-mensaje" id="mensaje-pantalla">
-      {{ config.mensaje_pantalla|default:"Bienvenido" }}
+    <div class="header-info">
+      <div class="turnos-counter">
+        <i class="fas fa-users"></i>
+        <span>{{ turnos_atencion|length|add:turnos_llamando|length|add:turnos_pendientes|length }}</span>
+        <span class="label">en espera</span>
+      </div>
+      <time id="clock" class="monitor-clock"></time>
     </div>
-    </div>
-  </section>
+  </header>
 
-  <!-- Panel de video en loop (siempre visible) -->
-  <section class="media-pane" aria-label="Contenido institucional">
-    <video src="{% static 'media/placeholder_video.mp4' %}" loop autoplay muted playsinline class="media-placeholder">
-      Tu navegador no soporta la reproducción de video.
-    </video>
-  </section>
+  <!-- Grid dinámico: turnos | video -->
+  <div class="monitor-grid" id="monitor-grid">
+    <!-- Columna de turnos -->
+    <section class="turnos-section" id="turnos-section">
+      
+      {# TURNOS LLAMANDO - Prioridad máxima #}
+      {% if turnos_llamando %}
+      <div class="turnos-group llamando-group">
+        <h2 class="group-title">
+          <i class="fas fa-bell"></i>
+          Turnos Llamando Ahora
+        </h2>
+        <div class="turnos-grid">
+          {% for t in turnos_llamando %}
+          <div class="turno-card turno-llamando" data-turno-id="{{ t.id }}">
+            <div class="turno-header">
+              <span class="turno-numero">{{ t.numero_visible }}</span>
+              <span class="turno-mesa">{{ t.mesa_asignada.nombre|default:"-" }}</span>
+            </div>
+            <div class="turno-body">
+              <div class="turno-persona" title="{{ t.ticket.persona.nombre_completo|default:'Sin datos' }}">
+                {% if t.ticket.persona %}
+                  {{ t.ticket.persona.apellido|upper }}, {{ t.ticket.persona.nombre|title }}
+                {% else %}
+                  Turno {{ t.numero_visible }}
+                {% endif %}
+              </div>
+              <div class="turno-tramite">{{ t.tramite.nombre }}</div>
+            </div>
+            <div class="turno-icon">
+              <i class="fas fa-bell-ring"></i>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# TURNOS EN ATENCIÓN #}
+      {% if turnos_atencion %}
+      <div class="turnos-group atencion-group">
+        <h2 class="group-title">
+          <i class="fas fa-user-check"></i>
+          En Atención
+        </h2>
+        <div class="turnos-grid">
+          {% for t in turnos_atencion %}
+          <div class="turno-card turno-atencion" data-turno-id="{{ t.id }}">
+            <div class="turno-header">
+              <span class="turno-numero">{{ t.numero_visible }}</span>
+              <span class="turno-mesa">{{ t.mesa_asignada.nombre|default:"-" }}</span>
+            </div>
+            <div class="turno-body">
+              <div class="turno-persona" title="{{ t.ticket.persona.nombre_completo|default:'Sin datos' }}">
+                {% if t.ticket.persona %}
+                  {{ t.ticket.persona.apellido|upper }}, {{ t.ticket.persona.nombre|title }}
+                {% else %}
+                  Turno {{ t.numero_visible }}
+                {% endif %}
+              </div>
+              <div class="turno-tramite">{{ t.tramite.nombre }}</div>
+            </div>
+            <div class="turno-icon">
+              <i class="fas fa-user"></i>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# TURNOS PENDIENTES - Agrupados por trámite #}
+      {% if turnos_pendientes %}
+      <div class="turnos-group pendientes-group">
+        <h2 class="group-title">
+          <i class="fas fa-clock"></i>
+          Próximos Turnos
+        </h2>
+        <div class="turnos-grid pendientes">
+          {% for t in turnos_pendientes|slice:":12" %}
+          <div class="turno-card turno-pendiente" data-turno-id="{{ t.id }}">
+            <div class="turno-header">
+              <span class="turno-numero">{{ t.numero_visible }}</span>
+              <span class="turno-tramite-tag">{{ t.tramite.nombre|truncatechars:15 }}</span>
+            </div>
+            <div class="turno-body">
+              <div class="turno-persona" title="{{ t.ticket.persona.nombre_completo|default:'Sin datos' }}">
+                {% if t.ticket.persona %}
+                  {{ t.ticket.persona.apellido|upper|truncatechars:20 }}
+                {% else %}
+                  Turno {{ t.numero_visible }}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# Estado vacío #}
+      {% if not turnos_llamando and not turnos_atencion and not turnos_pendientes %}
+      <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <h3>No hay turnos activos</h3>
+        <p>{{ config.mensaje_pantalla|default:"Bienvenido al sistema de turnos" }}</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- Columna de video (se oculta cuando hay actividad) -->
+    <aside class="media-section" id="media-section">
+      <div class="media-container">
+        <video src="{% static 'media/placeholder_video.mp4' %}" loop autoplay muted playsinline class="media-video">
+          Tu navegador no soporta video.
+        </video>
+        <div class="media-overlay">
+          <div class="mensaje-pantalla">
+            {{ config.mensaje_pantalla|default:"Bienvenido" }}
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
 </div>
 
 <!-- ████████ Overlay de aviso ████████ -->
@@ -110,197 +183,73 @@
 </audio>
 {% endif %}
 
+<!-- Layout Manager Script -->
+<script src="{% static 'js/monitor/layout-manager.js' %}?v=3"></script>
 
+<!-- Polling de actualización automática (cada 5 segundos) -->
 <script>
-// =====================================================================
-//  MONITOR — Lógica con configuración del área
-// =====================================================================
-(() => {
-  /* === Reloj ======================================================= */
-  const clock = document.getElementById("clock");
-  const tick  = () =>
-    clock.textContent = new Date().toLocaleTimeString("es-AR",
-      {hour:"2-digit",minute:"2-digit",second:"2-digit"});
-  tick(); setInterval(tick, 1000);
+(function() {
+  'use strict';
 
-  /* === Overlay de aviso =========================================== */
-  const overlay  = document.getElementById("alert-overlay");
-  const wrapper  = document.getElementById("alert-wrapper");
-  const alertSound = document.getElementById("alert-sound");
-  let hideTimer  = null;
-
-  // Tiempo de alerta configurable desde ConfiguracionArea
-  const ALERT_DURATION = (MONITOR_CONFIG.tiempoLlamadaSeg || 10) * 1000;
+  let refreshInterval = null;
+  const POLL_INTERVAL = 5000;
+  const areaId = new URLSearchParams(window.location.search).get('area') || '';
+  const monitorUrl = areaId ? `/turnos/monitor/?area=${areaId}` : '/turnos/monitor/';
 
   /**
-   * Muestra los turnos llamados con alerta visual.
-   * Usa tiempo_llamada_seg de la configuración del área.
-   * @param {Array<{nombre:string, box:string, tramite:string}>} data
+   * Obtiene HTML actualizado del server y reemplaza secciones que cambiaron
    */
-  function showAlert(data){
-    wrapper.innerHTML = "";
-    data.slice(0,4).forEach(t => {
-      const card = document.createElement("article");
-      card.className = "alert-card";
-      card.innerHTML = `
-        <span class="material-icons-outlined bell">notifications_active</span>
-        <div class="info">
-          <span class="name">${t.nombre}</span>
-          <span class="box">BOX&nbsp;${t.box}</span>
-        </div>`;
-      wrapper.appendChild(card);
-    });
-
-    // Mostrar overlay
-    overlay.classList.add("show");
-    overlay.hidden = false;
-
-    // ── Sonido de llamada (configurable) ──
-    if (MONITOR_CONFIG.sonidoLlamada && alertSound) {
-      alertSound.currentTime = 0;
-      alertSound.play().catch(() => {/* Autoplay bloqueado — ok */});
-    }
-
-    // ── Voz de llamada (placeholder TTS) ──
-    if (MONITOR_CONFIG.vozLlamada && 'speechSynthesis' in window) {
-      data.forEach(t => {
-        const utterance = new SpeechSynthesisUtterance(
-          `Turno de ${t.nombre}, dirigirse a ${t.box}`
-        );
-        utterance.lang = 'es-AR';
-        utterance.rate = 0.9;
-        utterance.pitch = 1;
-        speechSynthesis.speak(utterance);
-      });
-    }
-
-    // Reinicia temporizador con duración configurable
-    if (hideTimer) clearTimeout(hideTimer);
-    hideTimer = setTimeout(hideAlert, ALERT_DURATION);
-  }
-
-  function hideAlert(){
-    overlay.classList.remove("show");
-    setTimeout(() => overlay.hidden = true, 500);
-  }
-
-  /* === Polling de turnos llamando ================================= */
-  // En el futuro se reemplazará con WebSockets
-  let lastCalledIds = new Set();
-
-  async function pollTurnosLlamando() {
-    try {
-      const area = "{{ area.id|default:'' }}";
-      const url = area ? `/turnos/monitor/?area=${area}` : '/turnos/monitor/';
-      // Por ahora hacemos reload completo — con WebSockets será push
-    } catch(e) {
-      console.error('Error polling:', e);
-    }
-  }
-
-  /* === Integración futura con WebSockets ========================== *
-     const ws = new WebSocket("wss://…/monitor/");
-     ws.onmessage = e => {
-       const msg = JSON.parse(e.data);
-       if (msg.type === "call") showAlert(msg.turnos);
-       if (msg.type === "list") updateList(msg.turnos);
-     };
-  */
-
-  // Demo de la funcionalidad (quitar en producción)
-  window._demoCall = function() {
-    showAlert([
-      {nombre:"PÉREZ, ANA", box:"Mesa 2", tramite:"Consulta"},
-      {nombre:"BENITEZ, JOSE", box:"Mesa 5", tramite:"Trámite"}
-    ]);
-  };
-
-  /* ===== Auto-actualización sin parpadeo ============================= */
-  let refreshInterval = null;
-
   async function actualizarMonitor() {
     try {
-      const area = "{{ area.id|default:'' }}";
-      const url = area ? `/turnos/monitor/?area=${area}` : '/turnos/monitor/';
-      const response = await fetch(url, {
+      const resp = await fetch(monitorUrl, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
       });
-      const html = await response.text();
+      if (!resp.ok) return;
+
+      const html = await resp.text();
       const parser = new DOMParser();
       const newDoc = parser.parseFromString(html, 'text/html');
-      
-      // Extraer script con LLAMADAS_MOSTRADAS del nuevo documento
-      const scriptContent = newDoc.querySelector('script')?.textContent || '';
-      const match = scriptContent.match(/LLAMADAS_MOSTRADAS = new Set\(\[([\d,\s]*)\]\)/);
-      
-      if (match) {
-        // IDs de llamadas recientes del servidor
-        const llamadasRecientesStr = match[1].trim();
-        const nuevasLlamadasIds = llamadasRecientesStr 
-          ? llamadasRecientesStr.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
-          : [];
-        
-        // Detectar llamadas que no hemos mostrado aún
-        const llamadasNuevas = nuevasLlamadasIds.filter(id => !LLAMADAS_MOSTRADAS.has(id));
-        
-        if (llamadasNuevas.length > 0) {
-          // Obtener datos de los turnos llamados desde el DOM
-          const alertData = [];
-          llamadasNuevas.forEach(llamadaId => {
-            // Buscar el turno correspondiente en el DOM nuevo
-            const turnoEl = newDoc.querySelector('[data-estado="llamando"]');
-            if (turnoEl) {
-              const nombre = turnoEl.querySelector('.turno')?.textContent?.split('|')[0]?.trim() || '';
-              const box = turnoEl.querySelector('.box')?.textContent?.trim() || '';
-              const tramite = turnoEl.querySelector('.turno')?.textContent?.split('|')[1]?.trim() || '';
-              alertData.push({ nombre, box, tramite });
-            }
-            // Marcar como mostrada
-            LLAMADAS_MOSTRADAS.add(llamadaId);
-          });
-          
-          // Disparar alerta visual/sonora
-          if (alertData.length > 0) {
-            showAlert(alertData);
-          }
-        }
+
+      // Actualizar sección de turnos (solo si cambió)
+      actualizarSeccionSiDifiere('turnos-section', newDoc);
+
+      // Actualizar contador del header
+      const nuevoCounter = newDoc.querySelector('.turnos-counter span:first-of-type');
+      const actualCounter = document.querySelector('.turnos-counter span:first-of-type');
+      if (nuevoCounter && actualCounter && nuevoCounter.textContent !== actualCounter.textContent) {
+        actualCounter.textContent = nuevoCounter.textContent;
       }
-      
-      // Actualizar lista de turnos solo si hay cambios
-      actualizarListaSiDifiere('turnos-llamando-container', newDoc);
+
+      // Actualizar layout manager si existe
+      if (window.layoutManager) {
+        window.layoutManager.forceUpdate();
+      }
     } catch (e) {
-      console.error('Error actualizando monitor:', e);
+      console.error('[Monitor] Error actualizando:', e);
     }
   }
 
-  function actualizarListaSiDifiere(containerId, newDoc) {
-    const current = document.getElementById(containerId);
-    const nuevo = newDoc.getElementById(containerId);
-    
-    if (!current || !nuevo) return;
-    
-    // Solo actualizar si el contenido cambió
-    if (current.innerHTML.trim() !== nuevo.innerHTML.trim()) {
-      current.style.transition = 'opacity 0.3s';
-      current.style.opacity = '0.8';
-      setTimeout(() => {
-        current.innerHTML = nuevo.innerHTML;
-        current.style.opacity = '1';
-      }, 150);
+  function actualizarSeccionSiDifiere(id, newDoc) {
+    const actual = document.getElementById(id);
+    const nuevo = newDoc.getElementById(id);
+    if (!actual || !nuevo) return;
+
+    if (actual.innerHTML.trim() !== nuevo.innerHTML.trim()) {
+      actual.innerHTML = nuevo.innerHTML;
     }
   }
 
-  // Iniciar polling inteligente cada 5 segundos
-  refreshInterval = setInterval(actualizarMonitor, 5000);
+  // Iniciar polling
+  refreshInterval = setInterval(actualizarMonitor, POLL_INTERVAL);
 
-  // Pausar polling cuando la pestaña está oculta
+  // Pausar cuando la pestaña está oculta
   if (document.hidden !== undefined) {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         clearInterval(refreshInterval);
       } else {
-        refreshInterval = setInterval(actualizarMonitor, 5000);
         actualizarMonitor();
+        refreshInterval = setInterval(actualizarMonitor, POLL_INTERVAL);
       }
     });
   }
@@ -345,5 +294,4 @@
   }
 </style>
 
-<!-- WebSocket Scripts -->\n<script src=\"{% static 'js/turnos-websocket.js' %}\"></script>\n<script src=\"{% static 'js/monitor/websocket-client.js' %}\"></script>
 {% endblock %}

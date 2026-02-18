@@ -787,17 +787,16 @@ function actualizarSiDifiere(sectionId, newDoc) {
 }
 
 // Iniciar polling inteligente
-// NOTA: El polling está comentado porque usamos WebSocket para actualizaciones en tiempo real
-// refreshInterval = setInterval(actualizarPanel, 5000);
+refreshInterval = setInterval(actualizarPanel, 5000);
 
 // Pausar polling cuando la pestaña está oculta (optimización)
 if (document.hidden !== undefined) {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      // clearInterval(refreshInterval);
+      clearInterval(refreshInterval);
     } else {
-      // refreshInterval = setInterval(actualizarPanel, 5000);
-      // actualizarPanel(); // Actualizar inmediatamente al volver
+      refreshInterval = setInterval(actualizarPanel, 5000);
+      actualizarPanel(); // Actualizar inmediatamente al volver
     }
   });
 }
@@ -805,8 +804,8 @@ if (document.hidden !== undefined) {
 
 <!-- WebSocket Scripts para actualizaciones en tiempo real -->
 {% load static %}
-<script src=\"{% static 'js/turnos-websocket.js' %}\"></script>
-<script src=\"{% static 'js/operador-websocket.js' %}\"></script>
+<script src="{% static 'js/turnos-websocket.js' %}"></script>
+<script src="{% static 'js/operador-websocket.js' %}"></script>
 
 <!-- CSS adicional para animaciones WebSocket -->
 <style>

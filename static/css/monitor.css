@@ -1,209 +1,647 @@
-/* ───────────  VARIABLES GLOBALES  ─────────── */
-:root{
-  /* paleta base */
-  --azul-fondo: #022436;
-  --azul-card : #3ec0ff;
-  --gris-card : #d9d9d9;
-  --naranja   : #ff8c32;
-  --txt-oscuro: #223;
-  --txt-claro : #fff;
+/* ═══════════════════════════════════════════════════════════════
+   MONITOR DE TURNOS - UI MEJORADA PARA TV FULL HD (1920x1080)
+   Diseño dinámico, responsive, con layout adaptativo
+   ═══════════════════════════════════════════════════════════════ */
 
-  /* tamaños reusables */
-  --radio     : 14px;
-  --sombra    : 0 0 18px rgba(0,0,0,.45);
-  --duracion  : .35s;
-  --ease      : cubic-bezier(.4,0,.2,1);
-}
-
-html{font-size:300%}   /* 100 % → 18 px pasa a 180 % → 32 px aprox.           */
-@media (min-width:1920px){
-  html{font-size:250%} /* en 4 K la subimos aún más                            */
-}
-
-#clock{display:none}
-
-/* reset mínimo */
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{
-  height:100%;
-  overflow:hidden;
-  font-family:'Roboto', sans-serif;
-  background:var(--azul-fondo);
-  color:var(--txt-claro);
-}
-
-/* ───────────  GRID PRINCIPAL  ─────────── */
-.monitor-grid{
-  display:grid;
-  grid-template-columns: 42% 58%;
-  height:100%;
+:root {
+  /* Colores principales */
+  --bg-primary: #0a1929;
+  --bg-secondary: #132f4c;
+  --accent-primary: #3ec0ff;
+  --accent-success: #4caf50;
+  --accent-warning: #ff9800;
+  --accent-danger: #f44336;
+  
+  --text-primary: #ffffff;
+  --text-secondary: #b0bec5;
+  --text-muted: #78909c;
+  
+  /* Cards */
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --card-hover: rgba(255, 255, 255, 0.08);
+  
+  /* Efectos */
+  --border-radius: 12px;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Espaciado */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
 }
 
-/* ───────────  COLUMNA TURNOS  ─────────── */
-.turn-list{
-  padding:2vh 2vw;
-  display:flex;
-  flex-direction:column;
-  gap:1.2vh;
-  /* animación sutil al aparecer los turnos */
-  animation:floater .8s var(--ease) both;
+/* ═══════════════════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════════════════ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@keyframes floater{
-  from{opacity:0;transform:translateY(12px)}
-  to  {opacity:1;transform:none}
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.5;
 }
 
-/* encabezado */
-.turn-header{
-  display:grid;
-  grid-template-columns: 60px 1fr 110px 90px;
-  align-items:center;
-  font-weight:700;
-  font-size:clamp(1rem, 2.2vh, 1.4rem);
-  letter-spacing:1px;
-  text-shadow:0 0 8px #fff;
-}
-
-/* Reloj */
-#clock{
-  justify-self:center;
-  font-variant-numeric:tabular-nums;
-}
-
-/* lista de tarjetas */
-#turn-container{
-  list-style:none;
-  display:flex;
-  flex-direction:column;
-  gap:1.2vh;
-}
-
-/* ───── Tarjetas de turno ───── */
-.turn-card{
-  display:grid;
-  grid-template-columns:60px 1fr 90px;
-  align-items:center;
-  padding:1.4vh 1vw;
-  border-radius:var(--radio);
-  background:var(--gris-card);
-  color:var(--txt-oscuro);
-  font-size:clamp(1rem,2.4vh,1.5rem);
-  font-weight:500;
-  box-shadow:var(--sombra);
-  transition:transform var(--duracion) var(--ease),
-             box-shadow var(--duracion) var(--ease);
-}
-.turn-card .bell{
-  font-size:4vh;
-  color:var(--txt-oscuro);
-}
-
-/* efecto “destacar” en la tarjeta activa */
-.turn-card.active{
-  background:var(--azul-card);
-  color:var(--txt-claro);
-  transform:scale(1.03);
-  box-shadow:0 0 24px rgba(62,192,255,.6);
-}
-.turn-card.active .bell{
-  color:var(--txt-claro);
-}
-
-/* Item vacío */
-.turn-empty{
-  font-size:clamp(.9rem,2.2vh,1.3rem);
-  opacity:.6;
-  font-style:italic;
-}
-
-/* ───────────  COLUMNA MEDIA  ─────────── */
-.media-pane{
-  position:relative;
-  overflow:hidden;
-}
-.media-placeholder,
-.media-pane video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-/* ───────────  OVERLAY DE LLAMADA  ─────────── */
-#alert-overlay{
-  position:fixed;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:rgba(2,36,54,0.96);
-  z-index:900;
-  opacity:0;
-  visibility:hidden;
-  transition:opacity .5s var(--ease);
-}
-#alert-overlay.show{
-  opacity:1;
-  visibility:visible;
-}
-
-/* contenedor de tarjetas dentro del overlay */
-#alert-wrapper{
-  display:flex;
-  flex-wrap:wrap;
-  gap:2vw;
-}
-
-/* tarjeta de alerta */
-.alert-card{
-  display:flex;
-  align-items:center;
-  gap:1vw;
-  background:var(--azul-card);
-  padding:2.2vh 3.4vw;
-  border-radius:var(--radio);
-  font-size:clamp(1.3rem,3.2vh,1.8rem);
-  font-weight:500;
-  color:var(--txt-claro);
-  box-shadow:var(--sombra);
-  animation:pulse 1.8s infinite;
-}
-.alert-card .bell{font-size:5.4vh}
-
-/* animación latido */
-@keyframes pulse{
-  0%,100%{transform:scale(1)}
-  50%    {transform:scale(1.06)}
-}
-
-/* ───────────  BOTÓN DE DEMO (elimina en prod)  ─────────── */
-.demo-btn{
-  position:fixed;
-  bottom:2vh;
-  right:2vw;
-  z-index:950;
-  background:var(--naranja);
-  color:var(--txt-claro);
-  border:none;
-  border-radius:var(--radio);
-  padding:1.2vh 2vw;
-  font-size:clamp(.8rem,2vh,1rem);
-  font-weight:700;
-  cursor:pointer;
-  box-shadow:0 0 12px rgba(0,0,0,.35);
-  transition:opacity var(--duracion) var(--ease),
-             transform var(--duracion) var(--ease);
-}
-.demo-btn:hover{
-  opacity:.85;
-  transform:translateY(-2px);
-}
-
-/* ───────────  MEDIA QUERIES  ─────────── */
-/* Ajustes mínimos para pantallas menores a 1024px */
-@media (max-width:1024px){
-  .monitor-grid{
-    grid-template-columns: 100%;
+/* Optimización para Full HD */
+@media (min-width: 1920px) {
+  html {
+    font-size: 18px;
   }
-  .media-pane{display:none;} /* oculta video si la pantalla es chica */
+}
+
+/* Optimización para 4K */
+@media (min-width: 3840px) {
+  html {
+    font-size: 24px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LAYOUT PRINCIPAL
+   ═══════════════════════════════════════════════════════════════ */
+
+.monitor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* Header del monitor */
+.monitor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: var(--bg-secondary);
+  border-bottom: 2px solid rgba(62, 192, 255, 0.3);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.area-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.area-info i {
+  font-size: 2rem;
+  color: var(--accent-primary);
+}
+
+.area-nombre {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xl);
+}
+
+.turnos-counter {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius);
+  font-size: 1.2rem;
+}
+
+.turnos-counter i {
+  color: var(--accent-primary);
+}
+
+.turnos-counter span:first-of-type {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  /* Optimización para evitar repaint en cambios de texto */
+  will-change: contents;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  /* Ancho mínimo para evitar layout shift */
+  min-width: 3ch;
+  display: inline-block;
+  text-align: center;
+}
+
+.turnos-counter .label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.monitor-clock {
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  text-shadow: 0 0 12px rgba(62, 192, 255, 0.5);
+  /* Optimización para evitar repaint en actualización del reloj */
+  will-change: contents;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Grid dinámico: se adapta según contenido */
+.monitor-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  /* Transición eliminada para evitar parpadeo */
+}
+
+/* Con video activo: 60% turnos | 40% video */
+.monitor-grid.con-video {
+  grid-template-columns: 60% 40%;
+}
+
+/* Sin turnos: solo video */
+.monitor-grid.solo-video {
+  grid-template-columns: 1fr;
+}
+
+.monitor-grid.solo-video .turnos-section {
+  display: none;
+}
+
+.monitor-grid.solo-video .media-section {
+  display: block;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SECCIÓN DE TURNOS
+   ══════════════════════════════════════════════════════════════════ */
+
+.turnos-section {
+  padding: var(--spacing-xl);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  background: var(--bg-primary);
+  /* Optimización de rendering */
+  contain: layout style paint;
+  will-change: scroll-position;
+}
+
+/* Scrollbar personalizado */
+.turnos-section::-webkit-scrollbar {
+  width: 8px;
+}
+
+.turnos-section::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.turnos-section::-webkit-scrollbar-thumb {
+  background: rgba(62, 192, 255, 0.3);
+  border-radius: 4px;
+}
+
+.turnos-section::-webkit-scrollbar-thumb:hover {
+  background: rgba(62, 192, 255, 0.5);
+}
+
+/* Grupo de turnos */
+.turnos-group {
+  /* Animación eliminada para evitar parpadeo en actualizaciones */
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.group-title i {
+  font-size: 1.8rem;
+}
+
+.llamando-group .group-title {
+  color: var(--accent-danger);
+}
+
+.llamando-group .group-title i {
+  color: var(--accent-danger);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.atencion-group .group-title {
+  color: var(--accent-success);
+}
+
+.atencion-group .group-title i {
+  color: var(--accent-success);
+}
+
+.pendientes-group .group-title {
+  color: var(--accent-warning);
+}
+
+.pendientes-group .group-title i {
+  color: var(--accent-warning);
+}
+
+/* Grid de tarjetas */
+.turnos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.turnos-grid.pendientes {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   TARJETAS DE TURNO
+   ══════════════════════════════════════════════════════════════════ */
+
+.turno-card {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  overflow: hidden;
+}
+
+.turno-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--accent-primary);
+  opacity: 0.5;
+  transition: var(--transition);
+}
+
+.turno-card:hover {
+  background: var(--card-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.turno-card:hover::before {
+  opacity: 1;
+}
+
+/* Variantes de estado */
+.turno-llamando {
+  background: rgba(244, 67, 54, 0.15);
+  border-color: var(--accent-danger);
+  animation: cardPulse 2s infinite;
+}
+
+.turno-llamando::before {
+  background: var(--accent-danger);
+  width: 6px;
+  opacity: 1;
+}
+
+@keyframes cardPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(244, 67, 54, 0);
+  }
+}
+
+.turno-atencion {
+  background: rgba(76, 175, 80, 0.1);
+  border-color: var(--accent-success);
+}
+
+.turno-atencion::before {
+  background: var(--accent-success);
+}
+
+.turno-pendiente {
+  background: rgba(255, 152, 0, 0.08);
+  border-color: rgba(255, 152, 0, 0.3);
+}
+
+.turno-pendiente::before {
+  background: var(--accent-warning);
+  opacity: 0.3;
+}
+
+/* Header de la tarjeta */
+.turno-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.turno-numero {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  text-shadow: 0 0 8px rgba(62, 192, 255, 0.3);
+}
+
+.turno-llamando .turno-numero {
+  color: var(--accent-danger);
+  font-size: 2.2rem;
+}
+
+.turno-mesa {
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.turno-tramite-tag {
+  padding: 4px 12px;
+  background: rgba(255, 152, 0, 0.2);
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-warning);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+/* Body de la tarjeta */
+.turno-body {
+  position: relative;
+  z-index: 1;
+}
+
+.turno-persona {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.turno-llamando .turno-persona {
+  font-size: 1.4rem;
+}
+
+.turno-tramite {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Icono de la tarjeta */
+.turno-icon {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 3rem;
+  color: rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+.turno-llamando .turno-icon {
+  color: rgba(244, 67, 54, 0.15);
+  animation: shake 0.5s infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ESTADO VACÍO
+   ══════════════════════════════════════════════════════════════════ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--spacing-xl) * 2);
+  text-align: center;
+  color: var(--text-muted);
+  min-height: 400px;
+}
+
+.empty-state i {
+  font-size: 6rem;
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.3;
+}
+
+.empty-state h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-secondary);
+}
+
+.empty-state p {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SECCIÓN DE VIDEO
+   ══════════════════════════════════════════════════════════════════ */
+
+.media-section {
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  display: none;
+}
+
+.monitor-grid.con-video .media-section {
+  display: block;
+}
+
+.monitor-grid.solo-video .media-section {
+  display: block;
+}
+
+.media-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.media-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.media-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--spacing-xl);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mensaje-pantalla {
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-primary);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ANIMACIONES Y TRANSICIONES WEBSOCKET
+   ══════════════════════════════════════════════════════════════════ */
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.flash-animation {
+  animation: flash 0.5s ease 6;
+}
+
+@keyframes flash {
+  0%, 100% {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  50% {
+    background-color: rgba(255, 193, 7, 0.3);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RESPONSIVE PARA DIFERENTES RESOLUCIONES
+   ══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1600px) {
+  .turnos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+  
+  .turno-numero {
+    font-size: 1.5rem;
+  }
+  
+  .turno-persona {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 1366px) {
+  .area-nombre {
+    font-size: 1.5rem;
+  }
+  
+  .monitor-clock {
+    font-size: 1.5rem;
+  }
+  
+  .turnos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+/* Ocultar video en pantallas muy pequeñas */
+@media (max-width: 1024px) {
+  .monitor-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .media-section {
+    display: none !important;
+  }
 }

@@ -7,6 +7,7 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 from apps.core.models import Usuario, UsuarioRol, Turno, Mesa, Area, ConfiguracionArea, MotivoCierre
 from apps.core import services
+from apps.core.websocket_utils import emitir_turno_llamado, emitir_turno_atendiendo, emitir_turno_finalizado, emitir_turno_no_presento
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +111,10 @@ def api_llamar_turno(request, turno_id):
     try:
         turno = Turno.objects.select_related('ticket__persona', 'tramite', 'area', 'estado').get(pk=turno_id)
         turno = services.llamar_turno(turno, usuario, mesa)
+        
+        # Emitir evento WebSocket para actualizar monitor
+        emitir_turno_llamado(turno, mesa)
+        
         return JsonResponse({
             'ok': True,
             'turno_id': turno.id,
@@ -127,8 +132,12 @@ def api_llamar_turno(request, turno_id):
 def api_iniciar_atencion(request, turno_id):
     """POST /atencion/api/iniciar/<turno_id>/"""
     try:
-        turno = Turno.objects.select_related('estado').get(pk=turno_id)
+        turno = Turno.objects.select_related('estado', 'mesa_asignada').get(pk=turno_id)
         turno = services.iniciar_atencion(turno)
+        
+        # Emitir evento WebSocket
+        emitir_turno_atendiendo(turno, turno.mesa_asignada)
+        
         return JsonResponse({
             'ok': True,
             'turno_id': turno.id,
@@ -171,6 +180,10 @@ def api_finalizar_atencion(request, turno_id):
             observaciones=observaciones
         )
         logger.info(f"Turno {turno_id} finalizado correctamente. Estado: {turno.estado.nombre}")
+        
+        # Emitir evento WebSocket
+        emitir_turno_finalizado(turno)
+        
         return JsonResponse({
             'ok': True,
             'turno_id': turno.id,
@@ -189,6 +202,10 @@ def api_no_presento(request, turno_id):
     try:
         turno = Turno.objects.select_related('estado').get(pk=turno_id)
         turno = services.marcar_no_presento(turno)
+        
+        # Emitir evento WebSocket
+        emitir_turno_no_presento(turno)
+        
         return JsonResponse({
             'ok': True,
             'turno_id': turno.id,
@@ -217,6 +234,10 @@ def api_proximo_turno(request):
     
     try:
         turno = services.llamar_turno(proximo, usuario, mesa)
+        
+        # Emitir evento WebSocket para actualizar monitor en tiempo real
+        emitir_turno_llamado(turno, mesa)
+        
         return JsonResponse({
             'ok': True,
             'turno_id': turno.id,
@@ -271,15 +292,24 @@ def api_rellamar_turno(request, turno_id):
     Re-llama un turno que ya está en estado LLAMANDO.
     Registra un evento de re-llamada que el monitor detectará automáticamente.
     """
+    print(f'[API RELLAMAR] ===== INICIO RELLAMAR turno_id={turno_id} =====')
     usuario = _get_usuario(request)
+    print(f'[API RELLAMAR] Usuario: {usuario}')
     
     try:
         turno = Turno.objects.select_related(
             'estado', 'ticket__persona', 'mesa_asignada', 'tramite'
         ).get(pk=turno_id)
+        print(f'[API RELLAMAR] Turno encontrado: {turno.numero_visible}, Mesa: {turno.mesa_asignada}')
         
         # Llamar al servicio que registra la re-llamada
         services.rellamar_turno(turno, usuario)
+        print(f'[API RELLAMAR] services.rellamar_turno ejecutado OK')
+        
+        # Emitir evento WebSocket para actualizar monitor en tiempo real
+        print(f'[API RELLAMAR] Llamando emitir_turno_llamado...')
+        emitir_turno_llamado(turno, turno.mesa_asignada)
+        print(f'[API RELLAMAR] emitir_turno_llamado ejecutado OK')
         
         persona_nombre = turno.ticket.persona.nombre_completo if turno.ticket.persona else f"N° {turno.numero_visible}"
         mesa_nombre = turno.mesa_asignada.nombre if turno.mesa_asignada else '-'
