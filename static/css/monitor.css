@@ -230,7 +230,7 @@ body {
 
 /* Grupo de turnos */
 .turnos-group {
-  /* Animación eliminada para evitar parpadeo en actualizaciones */
+  margin-bottom: var(--spacing-sm);
 }
 
 .group-title {
