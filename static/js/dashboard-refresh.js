@@ -22,6 +22,12 @@
         
         if (currentValue === newValue) return;
         
+        // Cancelar animación previa si existe
+        if (element._animInterval) {
+            clearInterval(element._animInterval);
+            element._animInterval = null;
+        }
+        
         // Añadir clase de actualización
         element.classList.add('updating');
         
@@ -32,13 +38,14 @@
         const stepDuration = duration / steps;
         
         let currentStep = 0;
-        const interval = setInterval(() => {
+        element._animInterval = setInterval(() => {
             currentStep++;
             const intermediateValue = Math.round(currentValue + (stepValue * currentStep));
             element.textContent = intermediateValue;
             
             if (currentStep >= steps) {
-                clearInterval(interval);
+                clearInterval(element._animInterval);
+                element._animInterval = null;
                 element.textContent = newValue;
                 element.classList.remove('updating');
                 
@@ -53,11 +60,10 @@
 
     /**
      * Mapeo de claves de stats a IDs de elementos en el DOM
+     * Nota: en_atencion se maneja por separado (sumado con llamando)
      */
     const statsMapping = {
         'pendientes': 'stat-pendientes',
-        'en_atencion': 'stat-en-atencion',
-        'llamando': 'stat-llamando',
         'finalizados': 'stat-finalizados',
         'pendientes_vencidos': 'stat-vencidos',
         'no_presento': 'stat-no-presento'
@@ -86,7 +92,7 @@
             
             const stats = await response.json();
             
-            // Actualizar cada estadística con animación
+            // Actualizar estadísticas simples con animación
             for (const [key, elementId] of Object.entries(statsMapping)) {
                 const element = document.getElementById(elementId);
                 if (element && stats.hasOwnProperty(key)) {
@@ -94,10 +100,16 @@
                 }
             }
             
-            // Actualizar en_atencion (incluye llamando)
+            // Actualizar en_atencion (incluye llamando) - se maneja aparte
             const enAtencionElement = document.getElementById('stat-en-atencion');
             if (enAtencionElement && stats.en_atencion !== undefined && stats.llamando !== undefined) {
                 updateValueWithAnimation(enAtencionElement, stats.en_atencion + stats.llamando);
+            }
+            
+            // Actualizar total_hoy si existe
+            const totalElement = document.querySelector('.stat-value[style*="9c27b0"]');
+            if (totalElement && stats.total_hoy !== undefined) {
+                updateValueWithAnimation(totalElement, stats.total_hoy);
             }
             
             // Actualizar timestamp de última actualización
@@ -130,12 +142,10 @@
      * Inicia el sistema de actualización automática
      */
     function startAutoRefresh() {
-        // Actualización inicial inmediata (después de 5 segundos de carga)
-        setTimeout(() => {
-            refreshStats();
-        }, 5000);
+        // Cancelar timer previo si existe (evitar duplicados)
+        stopAutoRefresh();
         
-        // Configurar actualización periódica
+        // Configurar actualización periódica cada 60s
         refreshTimer = setInterval(refreshStats, REFRESH_INTERVAL);
         
         console.log(`✓ Auto-refresh activado: cada ${REFRESH_INTERVAL / 1000}s`);
@@ -148,7 +158,6 @@
         if (refreshTimer) {
             clearInterval(refreshTimer);
             refreshTimer = null;
-            console.log('✓ Auto-refresh detenido');
         }
     }
 
@@ -160,17 +169,24 @@
         if (document.hidden) {
             stopAutoRefresh();
         } else {
+            // Al volver, refrescar inmediatamente y reiniciar intervalo
+            refreshStats();
             startAutoRefresh();
-            // Actualización inmediata al volver a la pestaña
-            setTimeout(refreshStats, 1000);
         }
     });
 
     // Iniciar cuando el DOM esté listo
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startAutoRefresh);
-    } else {
+    function init() {
+        // Establecer hora de carga inicial
+        updateLastRefreshIndicator();
+        // Iniciar auto-refresh (primer refresh real a los 60s)
         startAutoRefresh();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
     }
 
     // Exponer funciones globalmente (opcional, para debug)

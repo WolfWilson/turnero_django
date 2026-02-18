@@ -23,9 +23,6 @@ sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 # Application definition
 
 INSTALLED_APPS = [
-    # Django Channels (debe ir primero para override runserver)
-    'daphne',
-    
     # Django
     'django.contrib.admin',
     'django.contrib.auth',
@@ -43,9 +40,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "api",
     "widget_tweaks",
-    
-    # Channels
-    'channels',
 ]
 
 
@@ -86,29 +80,6 @@ LOGOUT_REDIRECT_URL = "/login/"
 
 
 WSGI_APPLICATION = 'turnero.wsgi.application'
-
-# ============================================================
-# CHANNELS - Configuración WebSockets
-# ============================================================
-ASGI_APPLICATION = 'turnero.asgi.application'
-
-CHANNEL_LAYERS = {
-    'default': {
-        # Usar InMemoryChannelLayer para desarrollo (no requiere Redis)
-        # Para producción, cambiar a RedisChannelLayer
-        'BACKEND': 'channels.layers.InMemoryChannelLayer'
-    }
-}
-
-# Para producción con Redis, descomentar:
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             "hosts": [('127.0.0.1', 6379)],
-#         },
-#     },
-# }
 
 
 # Database

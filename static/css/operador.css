@@ -89,7 +89,7 @@
    TURNO EN LLAMADA (Card destacado superior)
    ───────────────────────────────────────────────────── */
 .turno-llamada-card {
-  background: linear-gradient(135deg, rgba(255, 87, 34, 0.95) 0%, rgba(244, 67, 54, 0.9) 100%);
+  background: linear-gradient(135deg, rgb(20 78 157 / 80%) 0%, rgb(24 23 23 / 90%) 100%);
   backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
