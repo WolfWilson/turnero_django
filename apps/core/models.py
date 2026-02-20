@@ -1,6 +1,7 @@
 ﻿# apps/core/models.py
 # Modelos mapeados a tablas SQL Server (managed = False)
 from django.db import models
+from datetime import time
 
 
 # -----------------------------------------------
@@ -467,7 +468,7 @@ class LlamadaTurno(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.tipo_llamada} - Turno #{self.turno_id} - {self.fecha_hora.strftime('%H:%M:%S')}"
+        return f"{self.tipo_llamada} - Turno #{self.turno.pk} - {self.fecha_hora.strftime('%H:%M:%S')}"
 
 
 # -----------------------------------------------
@@ -495,7 +496,7 @@ class TurnoHistorialDerivacion(models.Model):
         db_table = "TurnoHistorialDerivacion"
 
     def __str__(self):
-        return f"Derivacion Turno #{self.turno_id}: {self.operador_origen} -> {self.operador_destino}"
+        return f"Derivacion Turno #{self.turno.pk}: {self.operador_origen} -> {self.operador_destino}"
 
 
 # -----------------------------------------------
@@ -541,13 +542,13 @@ class ConfiguracionArea(models.Model):
                              verbose_name="Requiere motivo al finalizar turno")
 
     # ── HORARIO DE ATENCIÓN ──
-    emision_hora_inicio    = models.TimeField(default="07:00", db_column="EmisionHoraInicio",
+    emision_hora_inicio    = models.TimeField(default=time(7, 0),  db_column="EmisionHoraInicio",
                              verbose_name="Hora inicio emisión de turnos")
-    emision_hora_fin       = models.TimeField(default="12:30", db_column="EmisionHoraFin",
+    emision_hora_fin       = models.TimeField(default=time(12, 30), db_column="EmisionHoraFin",
                              verbose_name="Hora fin emisión de turnos")
-    atencion_hora_inicio   = models.TimeField(default="07:30", db_column="AtencionHoraInicio",
+    atencion_hora_inicio   = models.TimeField(default=time(7, 30),  db_column="AtencionHoraInicio",
                              verbose_name="Hora inicio atención")
-    atencion_hora_fin      = models.TimeField(default="12:30", db_column="AtencionHoraFin",
+    atencion_hora_fin      = models.TimeField(default=time(12, 30), db_column="AtencionHoraFin",
                              verbose_name="Hora fin atención")
 
     # ── CONFIGURACIÓN GENERAL ──
