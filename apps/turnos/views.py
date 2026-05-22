@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models import Max
 from apps.core.models import Tramite, Turno, Area, ConfiguracionArea, LlamadaTurno
 from apps.core import services
 from .forms import SolicitudTurnoForm
@@ -79,8 +80,8 @@ def monitor(request):
         estado_id=Turno.LLAMANDO,
         **({"area": area} if area else {}),
     ).select_related(
-        'ticket__persona', 'tramite', 'mesa_asignada'
-    ).order_by('-fecha_hora_creacion')[:4]
+        'ticket__persona', 'tramite', 'mesa_asignada'    ).annotate(
+        ultima_llamada_id=Max('llamadas__id')    ).order_by('-fecha_hora_creacion')[:4]
     
     # Turnos en atención
     turnos_atencion = Turno.objects.filter(

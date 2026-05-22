@@ -58,7 +58,7 @@
         </h2>
         <div class="turnos-grid">
           {% for t in turnos_llamando %}
-          <div class="turno-card turno-llamando" data-turno-id="{{ t.id }}">
+          <div class="turno-card turno-llamando" data-turno-id="{{ t.id }}" data-llamada-id="{{ t.ultima_llamada_id|default:0 }}">
             <div class="turno-header">
               <span class="turno-numero">{{ t.numero_visible }}</span>
               <span class="turno-mesa">{{ t.mesa_asignada.nombre|default:"-" }}</span>
@@ -205,10 +205,14 @@
   const monitorUrl = areaId ? `/turnos/monitor/?area=${areaId}` : '/turnos/monitor/';
 
   // ── Rastreo de turnos llamando ──
-  // Inicializado con los turnos llamando ya visibles al cargar la página
+  // Clave compuesta turnoId+llamadaId para detectar tanto primeras llamadas como rellamadas
+  function callingKey(el) {
+    return `${el.dataset.turnoId}-${el.dataset.llamadaId || 0}`;
+  }
+
   let prevCallingIds = new Set(
     Array.from(document.querySelectorAll('.turno-llamando[data-turno-id]'))
-         .map(el => el.dataset.turnoId)
+         .map(callingKey)
   );
 
   let alertaTimer = null;
@@ -216,11 +220,12 @@
   /** Extrae datos de las tarjetas llamando del documento dado */
   function getCallingTurns(doc) {
     return Array.from(doc.querySelectorAll('.turno-llamando[data-turno-id]')).map(card => ({
-      id:      card.dataset.turnoId,
-      numero:  card.querySelector('.turno-numero')?.textContent?.trim()  || '',
-      persona: card.querySelector('.turno-persona')?.textContent?.trim() || '',
-      mesa:    card.querySelector('.turno-mesa')?.textContent?.trim()    || '',
-      tramite: card.querySelector('.turno-tramite')?.textContent?.trim() || '',
+      id:       card.dataset.turnoId,
+      key:      `${card.dataset.turnoId}-${card.dataset.llamadaId || 0}`,
+      numero:   card.querySelector('.turno-numero')?.textContent?.trim()  || '',
+      persona:  card.querySelector('.turno-persona')?.textContent?.trim() || '',
+      mesa:     card.querySelector('.turno-mesa')?.textContent?.trim()    || '',
+      tramite:  card.querySelector('.turno-tramite')?.textContent?.trim() || '',
     }));
   }
 
@@ -299,8 +304,8 @@
 
       // Detectar nuevos turnos llamando ANTES de actualizar el DOM
       const nuevosCallingTurns = getCallingTurns(newDoc);
-      const nuevosIds = new Set(nuevosCallingTurns.map(t => t.id));
-      const hayNuevos  = nuevosCallingTurns.some(t => !prevCallingIds.has(t.id));
+      const nuevosIds  = new Set(nuevosCallingTurns.map(t => t.key));
+      const hayNuevos  = nuevosCallingTurns.some(t => !prevCallingIds.has(t.key));
 
       // Actualizar sección de turnos (solo si cambió)
       actualizarSeccionSiDifiere('turnos-section', newDoc);
