@@ -3,9 +3,9 @@ import logging
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.utils import timezone
-from apps.core.models import Usuario, UsuarioRol, Turno, Mesa, Area, ConfiguracionArea, MotivoCierre
+from apps.core.models import Usuario, UsuarioRol, Turno, Mesa, Area, ConfiguracionArea, MotivoCierre, TurnoHistorialDerivacion
 from apps.core import services
 
 logger = logging.getLogger(__name__)
@@ -61,13 +61,26 @@ def panel_mesa(request):
     # Turnos pendientes del área del operador (sin filtrar por fecha,
     # para que se vean los que quedaron pendientes de días anteriores)
     area_filter = {'area': area} if area else {}
-    turnos_pendientes = Turno.objects.filter(
+    turnos_pendientes_qs = Turno.objects.filter(
         estado_id=Turno.PENDIENTE,
         **area_filter,
     ).select_related(
         'ticket__persona', 'tramite', 'area'
-    ).order_by('-ticket__prioridad', 'fecha_hora_creacion')[:15]
-    
+    ).order_by('-ticket__prioridad', 'fecha_hora_creacion')
+
+    # IDs de turnos pendientes que fueron derivados (tienen historial de derivación)
+    turnos_derivados_ids = set(
+        TurnoHistorialDerivacion.objects.filter(
+            turno__estado_id=Turno.PENDIENTE,
+            **({'turno__area': area} if area else {}),
+        ).values_list('turno_id', flat=True)
+    )
+
+    # Separar derivados del resto y ponerlos primero
+    derivados = [t for t in turnos_pendientes_qs if t.id in turnos_derivados_ids]
+    no_derivados = [t for t in turnos_pendientes_qs if t.id not in turnos_derivados_ids]
+    turnos_pendientes = (derivados + no_derivados)[:15]
+
     # Contar turnos en espera
     total_espera = Turno.objects.filter(
         estado_id=Turno.PENDIENTE,
@@ -80,6 +93,7 @@ def panel_mesa(request):
     context = {
         'turno_actual': turno_actual,
         'turnos_pendientes': turnos_pendientes,
+        'turnos_derivados_ids': turnos_derivados_ids,
         'total_espera': total_espera,
         'mesa': mesa,
         'area': area,
@@ -267,6 +281,39 @@ def api_derivar_turno(request, turno_id):
         })
     except (Turno.DoesNotExist, Usuario.DoesNotExist, ValueError) as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@user_passes_test(es_operador)
+@require_GET
+def api_operadores_area(request):
+    """GET /atencion/api/operadores/ - operadores activos del área del usuario actual."""
+    usuario = _get_usuario(request)
+    if not usuario:
+        return JsonResponse({'error': 'Usuario no encontrado'}, status=400)
+
+    mesa = _get_mesa_operador(usuario)
+    area = mesa.area if mesa else Area.objects.first()
+
+    if not area:
+        return JsonResponse({'operadores': []})
+
+    operadores = (
+        Usuario.objects.filter(
+            mesas_asignadas__area=area,
+            mesas_asignadas__activa=True,
+            mesas_asignadas__operador_asignado__isnull=False,
+        )
+        .exclude(pk=usuario.pk)
+        .distinct()
+    )
+
+    return JsonResponse({
+        'operadores': [
+            {'id': op.id, 'nombre': op.display_name or op.username}
+            for op in operadores
+        ]
+    })
 
 
 @login_required

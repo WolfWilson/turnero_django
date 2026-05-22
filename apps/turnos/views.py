@@ -10,6 +10,30 @@ from .services import crear_turno
 
 # ---------- PANTALLA DEL TÓTEM PÚBLICO ----------
 def turnero_public(request):
+    # Resolver área desde query param (ej. QR con ?area=3)
+    area_id = request.GET.get("area") or request.POST.get("area")
+    area = None
+    if area_id:
+        area = Area.objects.filter(pk=area_id, activa=True).first()
+    if area is None:
+        area = Area.objects.filter(activa=True).first()
+
+    # ── BLOQUEO DURO: verificar horario de emisión antes de mostrar cualquier formulario ──
+    if area:
+        horario = services.esta_en_horario_emision(area)
+        if not horario["permitido"]:
+            config = services.obtener_config_area(area)
+            return render(
+                request,
+                "turnos/fuera_de_horario.html",
+                {
+                    "area": area,
+                    "mensaje": horario["mensaje"],
+                    "hora_inicio": config.get("emision_hora_inicio"),
+                    "hora_fin": config.get("emision_hora_fin"),
+                },
+            )
+
     if request.method == "POST":
         form = SolicitudTurnoForm(request.POST)
         if form.is_valid():
@@ -24,7 +48,7 @@ def turnero_public(request):
     return render(
         request,
         "turnos/turnero_public.html",
-        {"form": form, "tramites": tramites},
+        {"form": form, "tramites": tramites, "area": area},
     )
 
 

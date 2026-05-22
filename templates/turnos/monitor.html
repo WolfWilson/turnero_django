@@ -170,9 +170,17 @@
   </div>
 </div>
 
-<!-- ████████ Overlay de aviso ████████ -->
-<div id="alert-overlay" aria-live="assertive" hidden>
-  <div id="alert-wrapper"></div>
+<!-- ████████ Alerta Fullscreen — Push Notification para TV ████████ -->
+<div id="alerta-fullscreen" aria-live="assertive" role="alert">
+  <div class="alerta-header">
+    <i class="fas fa-bell"></i>
+    Turno Llamado
+    <i class="fas fa-bell"></i>
+  </div>
+  <div class="alerta-cards-grid" id="alerta-cards"></div>
+  <div class="alerta-barra-progreso">
+    <div class="alerta-barra-progreso-fill" id="alerta-barra"></div>
+  </div>
 </div>
 
 <!-- Audio de llamada (placeholder — se reemplaza con archivo real) -->
@@ -196,6 +204,85 @@
   const areaId = new URLSearchParams(window.location.search).get('area') || '';
   const monitorUrl = areaId ? `/turnos/monitor/?area=${areaId}` : '/turnos/monitor/';
 
+  // ── Rastreo de turnos llamando ──
+  // Inicializado con los turnos llamando ya visibles al cargar la página
+  let prevCallingIds = new Set(
+    Array.from(document.querySelectorAll('.turno-llamando[data-turno-id]'))
+         .map(el => el.dataset.turnoId)
+  );
+
+  let alertaTimer = null;
+
+  /** Extrae datos de las tarjetas llamando del documento dado */
+  function getCallingTurns(doc) {
+    return Array.from(doc.querySelectorAll('.turno-llamando[data-turno-id]')).map(card => ({
+      id:      card.dataset.turnoId,
+      numero:  card.querySelector('.turno-numero')?.textContent?.trim()  || '',
+      persona: card.querySelector('.turno-persona')?.textContent?.trim() || '',
+      mesa:    card.querySelector('.turno-mesa')?.textContent?.trim()    || '',
+      tramite: card.querySelector('.turno-tramite')?.textContent?.trim() || '',
+    }));
+  }
+
+  /** Muestra la alerta fullscreen con todos los turnos actualmente llamando */
+  function mostrarAlertaFullscreen(turns) {
+    const overlay = document.getElementById('alerta-fullscreen');
+    const grid    = document.getElementById('alerta-cards');
+    const barra   = document.getElementById('alerta-barra');
+    if (!overlay || !grid) return;
+
+    // Construir tarjetas
+    grid.innerHTML = '';
+    turns.forEach(t => {
+      const card = document.createElement('div');
+      card.className = 'alerta-turno-card';
+      card.innerHTML = `
+        <div class="alerta-turno-numero">${t.numero}</div>
+        <div class="alerta-turno-persona">${t.persona}</div>
+        <div class="alerta-turno-mesa">${t.mesa}</div>
+        <div class="alerta-turno-tramite">${t.tramite}</div>
+      `;
+      grid.appendChild(card);
+    });
+
+    // Barra de progreso (cuenta regresiva visual)
+    const durSeg = (window.MONITOR_CONFIG?.tiempoLlamadaSeg || 10);
+    if (barra) {
+      barra.style.transition = 'none';
+      barra.style.width = '100%';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        barra.style.transition = `width ${durSeg}s linear`;
+        barra.style.width = '0%';
+      }));
+    }
+
+    overlay.classList.add('activa');
+
+    // Sonido
+    if (window.MONITOR_CONFIG?.sonidoLlamada) {
+      const audio = document.getElementById('alert-sound');
+      if (audio) audio.play().catch(() => {});
+    }
+
+    // Voz (TTS)
+    if (window.MONITOR_CONFIG?.vozLlamada && window.speechSynthesis && turns.length > 0) {
+      window.speechSynthesis.cancel();
+      turns.forEach((t, i) => {
+        const u = new SpeechSynthesisUtterance(`Turno ${t.numero}, ${t.persona}, dirigirse a ${t.mesa}`);
+        u.lang = 'es-AR';
+        u.rate = 0.88;
+        u.volume = 1;
+        setTimeout(() => window.speechSynthesis.speak(u), i * 3500);
+      });
+    }
+
+    // Auto-cerrar
+    if (alertaTimer) clearTimeout(alertaTimer);
+    alertaTimer = setTimeout(() => {
+      overlay.classList.remove('activa');
+    }, durSeg * 1000);
+  }
+
   /**
    * Obtiene HTML actualizado del server y reemplaza secciones que cambiaron
    */
@@ -209,6 +296,11 @@
       const html = await resp.text();
       const parser = new DOMParser();
       const newDoc = parser.parseFromString(html, 'text/html');
+
+      // Detectar nuevos turnos llamando ANTES de actualizar el DOM
+      const nuevosCallingTurns = getCallingTurns(newDoc);
+      const nuevosIds = new Set(nuevosCallingTurns.map(t => t.id));
+      const hayNuevos  = nuevosCallingTurns.some(t => !prevCallingIds.has(t.id));
 
       // Actualizar sección de turnos (solo si cambió)
       actualizarSeccionSiDifiere('turnos-section', newDoc);
@@ -224,6 +316,15 @@
       if (window.layoutManager) {
         window.layoutManager.forceUpdate();
       }
+
+      // Mostrar alerta fullscreen si hay llamadas nuevas
+      if (hayNuevos && nuevosCallingTurns.length > 0) {
+        mostrarAlertaFullscreen(nuevosCallingTurns);
+      }
+
+      // Actualizar set de llamadas vistas
+      prevCallingIds = nuevosIds;
+
     } catch (e) {
       console.error('[Monitor] Error actualizando:', e);
     }
@@ -231,7 +332,7 @@
 
   function actualizarSeccionSiDifiere(id, newDoc) {
     const actual = document.getElementById(id);
-    const nuevo = newDoc.getElementById(id);
+    const nuevo  = newDoc.getElementById(id);
     if (!actual || !nuevo) return;
 
     if (actual.innerHTML.trim() !== nuevo.innerHTML.trim()) {

@@ -14,4 +14,5 @@ urlpatterns = [
     path("api/no-presento/<int:turno_id>/", views.api_no_presento,     name="api_no_presento"),
     path("api/proximo/",                   views.api_proximo_turno,    name="api_proximo"),
     path("api/derivar/<int:turno_id>/",    views.api_derivar_turno,    name="api_derivar"),
+    path("api/operadores/",               views.api_operadores_area,  name="api_operadores"),
 ]

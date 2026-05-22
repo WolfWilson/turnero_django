@@ -171,8 +171,11 @@
     </thead>
     <tbody>
       {% for turno in turnos_pendientes %}
-      <tr onclick="seleccionarTurno({{ turno.id }})" {% if turno.ticket.prioridad > 0 %}class="turno-prioritario"{% endif %}>
-        <td class="turno-numero-cell">{{ turno.numero_visible|stringformat:"03d" }}</td>
+      <tr onclick="seleccionarTurno({{ turno.id }})" {% if turno.id in turnos_derivados_ids %}class="turno-derivado{% if turno.ticket.prioridad > 0 %} turno-prioritario{% endif %}"{% elif turno.ticket.prioridad > 0 %}class="turno-prioritario"{% endif %}>
+        <td class="turno-numero-cell">
+          {{ turno.numero_visible|stringformat:"03d" }}
+          {% if turno.id in turnos_derivados_ids %}<span class="badge-derivado" title="Derivado"><i class="fas fa-share"></i></span>{% endif %}
+        </td>
         <td class="turno-nombre-cell">
           {{ turno.ticket.persona.apellido|upper }}, {{ turno.ticket.persona.nombre|title }}
         </td>
@@ -285,9 +288,11 @@
       <div class="modal-icon modal-icon-derivar"><i class="fas fa-share"></i></div>
       <h3>Derivar Turno</h3>
     </div>
-    <p class="modal-desc">Ingrese el ID del operador destino y un motivo opcional.</p>
-    <label class="modal-label">Operador destino (ID) <span style="color:#f44336;">*</span></label>
-    <input type="number" id="derivar-destino" class="modal-input" placeholder="Ej: 2" min="1">
+    <p class="modal-desc">Seleccione el operador destino del área.</p>
+    <label class="modal-label">Operador destino <span style="color:#f44336;">*</span></label>
+    <select id="derivar-destino" class="modal-input" style="appearance:auto;">
+      <option value="">Cargando operadores...</option>
+    </select>
     <label class="modal-label" style="margin-top:0.75rem;">Motivo (opcional)</label>
     <textarea id="derivar-motivo" rows="2" class="modal-input" placeholder="Motivo de la derivación..."></textarea>
     <div class="modal-actions">
@@ -435,6 +440,16 @@
     padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; font-weight: 600;
   }
   .turno-prioridad-cell { text-align: center; }
+
+  /* ═══ Derivaciones ═══ */
+  .turno-derivado { background: rgba(156, 39, 176, 0.08) !important; border-left: 3px solid rgba(156, 39, 176, 0.7); }
+  .badge-derivado {
+    display: inline-flex; align-items: center;
+    background: rgba(156, 39, 176, 0.2); color: #9c27b0;
+    padding: 1px 6px; border-radius: 8px; font-size: 0.72rem; font-weight: 600;
+    margin-left: 4px; vertical-align: middle; gap: 3px;
+  }
+  .badge-derivado::before { content: "Deriv."; font-size: 0.68rem; }
 </style>
 
 <!-- Toast container (stacked accordion) -->
@@ -532,7 +547,8 @@ function cerrarModal(modalId) {
     turnoFinalizandoId = null;
   }
   if (modalId === 'modal-derivar') {
-    document.getElementById('derivar-destino').value = '';
+    const sel = document.getElementById('derivar-destino');
+    sel.innerHTML = '<option value="">— Seleccionar operador —</option>';
     document.getElementById('derivar-motivo').value = '';
     turnoDerivandoId = null;
   }
@@ -706,16 +722,32 @@ async function proximoTurno() {
 }
 
 // ── Derivar turno (con modal) ──
-function derivarTurno(turnoId) {
+async function derivarTurno(turnoId) {
   turnoDerivandoId = turnoId;
+  const select = document.getElementById('derivar-destino');
+  select.innerHTML = '<option value="">Cargando operadores...</option>';
   document.getElementById('modal-derivar').style.display = 'flex';
-  setTimeout(() => document.getElementById('derivar-destino').focus(), 150);
+  try {
+    const data = await fetch('/atencion/api/operadores/', {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(r => r.json());
+    if (data.operadores && data.operadores.length > 0) {
+      select.innerHTML = '<option value="">— Seleccionar operador —</option>' +
+        data.operadores.map(op => `<option value="${op.id}">${op.nombre}</option>`).join('');
+    } else {
+      select.innerHTML = '<option value="">No hay otros operadores en el área</option>';
+    }
+  } catch (e) {
+    select.innerHTML = '<option value="">Error al cargar operadores</option>';
+  }
+  setTimeout(() => select.focus(), 150);
 }
 
 async function confirmarDerivacion() {
-  const destino = document.getElementById('derivar-destino').value.trim();
+  const select = document.getElementById('derivar-destino');
+  const destino = select.value;
   if (!destino) {
-    showToast('Debe ingresar el ID del operador destino', 'warning');
+    showToast('Debe seleccionar un operador destino', 'warning');
     return;
   }
   const motivo = document.getElementById('derivar-motivo').value.trim();

@@ -18,8 +18,8 @@ class MonitorLayoutManager {
     // Contadores
     this.turnosCounter = document.querySelector('.turnos-counter span:first-of-type');
     
-    // Estado actual
-    this.currentMode = 'solo-video';
+    // Estado actual (null para forzar aplicación de clase en la primera carga)
+    this.currentMode = null;
     this.turnosActivos = 0;
     
     // Configuración
@@ -171,10 +171,16 @@ class MonitorLayoutManager {
   }
   
   /**
-   * Manejo manual del layout (para uso desde WebSocket)
+   * Manejo manual del layout (para uso desde polling/WebSocket)
+   * Re-consulta referencias al DOM porque el innerHTML puede haber sido reemplazado
    */
   forceUpdate() {
     console.log('[LayoutManager] Actualización forzada del layout');
+    // Re-query group references in case innerHTML was replaced by polling
+    this.llamandoGroup = document.querySelector('.llamando-group');
+    this.atencionGroup = document.querySelector('.atencion-group');
+    this.pendientesGroup = document.querySelector('.pendientes-group');
+    this.turnosCounter = document.querySelector('.turnos-counter span:first-of-type');
     this.updateLayout();
   }
   
