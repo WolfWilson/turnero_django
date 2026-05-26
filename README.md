@@ -509,26 +509,34 @@ Estas son las únicas tablas que Django crea/altera con `manage.py migrate`.
 
 ## WebSockets (Tiempo Real)
 
-El código de WebSocket está implementado pero es **opcional** en la configuración actual (el `asgi.py` utiliza el ASGI estándar de Django sin Channels).
+> El sistema **no usa WebSockets en producción**. El monitor y el panel del operador actualizan mediante **HTTP polling cada 5 segundos** (`setInterval + fetch`). Los archivos de Channels no están cargados en ningún template.
 
-**Archivos relevantes:**
-- `apps/core/consumers.py` — `TurnosConsumer`: maneja eventos `turno_creado`, `turno_llamado`, `turno_atendiendo`, etc.
-- `turnero/routing.py` — Ruta WebSocket: `ws/turnos/`
-- `static/js/turnos-websocket.js` — Cliente JS para el monitor
-- `static/js/operador-websocket.js` — Cliente JS para el panel del operador
+### Implementación actual (polling)
 
-**Dependencias adicionales** (`requirements_websockets.txt`):
+| Pantalla | Mecanismo | Intervalo |
+|---|---|---|
+| Monitor (`monitor.html`) | `fetch(monitorUrl)` + DOM diff selectivo | 5 s |
+| Panel operador (`panel.html`) | `fetch(panelUrl)` + reemplazo de secciones | 5 s |
+
+El polling se pausa automáticamente cuando la pestaña está oculta (`visibilitychange`) y se reanuda al volver.
+
+### Código de WebSocket (no activo)
+
+Los siguientes archivos están escritos pero **no están incluidos en ningún template**:
+
+- `apps/core/consumers.py` — `TurnosConsumer`
+- `turnero/routing.py` — ruta `ws/turnos/`
+- `static/js/turnos-websocket.js` — cliente JS del monitor
+- `static/js/operador-websocket.js` — cliente JS del operador
+
+**Dependencias necesarias si se quisiera activar** (`requirements_websockets.txt`):
 ```
 channels>=4.0.0
 channels-redis>=4.1.0
 daphne>=4.0.0
 ```
 
-Para activar WebSocket en producción se debe:
-1. Instalar `requirements_websockets.txt`
-2. Configurar Redis como channel layer
-3. Actualizar `turnero/asgi.py` para usar el router de Channels
-4. Cambiar el arranque de uvicorn al modo ASGI
+Activarlo requeriría: instalar Channels + Redis, actualizar `turnero/asgi.py` con el router de Channels, e incluir los `.js` en los templates. No es necesario para el funcionamiento actual.
 
 ---
 

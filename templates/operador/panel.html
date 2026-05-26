@@ -819,7 +819,7 @@ function actualizarSiDifiere(sectionId, newDoc) {
 }
 
 // Iniciar polling inteligente
-refreshInterval = setInterval(actualizarPanel, 5000);
+refreshInterval = setInterval(actualizarPanel, 2000);
 
 // Pausar polling cuando la pestaña está oculta (optimización)
 if (document.hidden !== undefined) {
@@ -827,7 +827,7 @@ if (document.hidden !== undefined) {
     if (document.hidden) {
       clearInterval(refreshInterval);
     } else {
-      refreshInterval = setInterval(actualizarPanel, 5000);
+      refreshInterval = setInterval(actualizarPanel, 2000);
       actualizarPanel(); // Actualizar inmediatamente al volver
     }
   });
