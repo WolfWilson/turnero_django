@@ -1,142 +1,136 @@
-# Deploy — Gestión de Gestores (IIS + uvicorn + httpPlatformHandler)
+# Deploy — Turnero (IIS + uvicorn + httpPlatformHandler) — web03
 
-## Nombres de referencia
+## Referencia rápida
 
-| Elemento         | Valor                                      |
-|------------------|--------------------------------------------|
-| App Pool         | `AppPool_GestionGestores`                  |
-| Sitio IIS        | `Gestion_Gestores`                         |
-| Carpeta física   | `C:\inetpub\Sites\Gestion_Gestores`        |
-| Log de arranque  | `...\logs\wrapper_stdout.log`              |
+| Elemento       | Valor                              |
+|----------------|------------------------------------|
+| App Pool       | `AppPool_Turnero`                  |
+| Sitio IIS      | `Turnero`                          |
+| Carpeta física | `C:\inetpub\Sites\Turnero`         |
+| Módulo IIS     | `httpPlatformHandler`              |
+| Arranque       | `start_uvicorn.bat %HTTP_PLATFORM_PORT%` |
+| Log            | `logs\wrapper_stdout.log`          |
+| Settings       | `turnero.settings`                 |
+| ASGI app       | `turnero.asgi:application`         |
 
 ---
 
-## Pasos rápidos
-
-### 1 — Copiar archivos y crear venv
+## Despliegue inicial
 
 ```cmd
-xcopy /E /I /Y ".\*" "C:\inetpub\Sites\Gestion_Gestores\"
-cd C:\inetpub\Sites\Gestion_Gestores
+xcopy /E /I /Y ".\*" "C:\inetpub\Sites\Turnero\"
+cd C:\inetpub\Sites\Turnero
 python -m venv venv
 venv\Scripts\python.exe -m pip install -r requirements.txt
 mkdir logs
+venv\Scripts\python.exe manage.py collectstatic --noinput
+venv\Scripts\python.exe manage.py migrate
 ```
 
-### 2 — Configurar `.env` de producción
+### `.env` de producción
 
 ```env
-SECRET_KEY=<nueva-clave>
+SECRET_KEY=<generar con get_random_secret_key()>
 DEBUG=False
 ALLOWED_HOSTS=web03,<IP>
 
-DB_HOST_CONS=SQL01
-DB_NAMEC_CONS=Aportes
-DB_DRIVER_CONS=SQL Server Native Client 11.0
-SQL_USER_CONS=user_4gestores
-SQL_PASS_CONS=<password>
-```
+DB_NAME=Turnero
+DB_HOST=web03
+SQL_USER=turnero_user
+SQL_PASS=<password>
+DB_DRIVER=SQL Server Native Client 11.0
 
-Generar SECRET_KEY:
-```cmd
-venv\Scripts\python.exe -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-```
-
-### 3 — Collectstatic y check
-
-```cmd
-venv\Scripts\python.exe manage.py collectstatic --noinput --settings=config.settings.production
-venv\Scripts\python.exe manage.py check --settings=config.settings.production
+APORTES_DB_HOST=sql01
 ```
 
 ---
 
-## App Pool y Sitio (PowerShell como Admin)
+## App Pool y Sitio (PowerShell Admin)
 
 ```powershell
 Import-Module WebAdministration
 
-# App Pool — sin runtime .NET, sin idle timeout
-New-WebAppPool -Name "AppPool_GestionGestores"
-Set-ItemProperty IIS:\AppPools\AppPool_GestionGestores managedRuntimeVersion ""
-Set-ItemProperty IIS:\AppPools\AppPool_GestionGestores startMode AlwaysRunning
+New-WebAppPool -Name "AppPool_Turnero"
+Set-ItemProperty IIS:\AppPools\AppPool_Turnero managedRuntimeVersion ""
+Set-ItemProperty IIS:\AppPools\AppPool_Turnero startMode AlwaysRunning
 Set-WebConfigurationProperty `
-    -Filter '/system.applicationHost/applicationPools/add[@name="AppPool_GestionGestores"]' `
+    -Filter '/system.applicationHost/applicationPools/add[@name="AppPool_Turnero"]' `
     -Name "processModel.idleTimeout" -Value "00:00:00"
 
-# Sitio — ajustar puerto si 80 está ocupado
-New-Website -Name "Gestion_Gestores" `
-            -PhysicalPath "C:\inetpub\Sites\Gestion_Gestores" `
-            -ApplicationPool "AppPool_GestionGestores" `
+New-Website -Name "Turnero" `
+            -PhysicalPath "C:\inetpub\Sites\Turnero" `
+            -ApplicationPool "AppPool_Turnero" `
             -Port 80 -Force
 
-# Permisos de escritura para media/ y logs/
-icacls "C:\inetpub\Sites\Gestion_Gestores" /grant "IIS AppPool\AppPool_GestionGestores:(OI)(CI)M" /T
+icacls "C:\inetpub\Sites\Turnero" /grant "IIS AppPool\AppPool_Turnero:(OI)(CI)M" /T
 ```
 
 ---
 
-## httpPlatformHandler — puntos críticos
+## Operaciones frecuentes
 
-El sitio usa **httpPlatformHandler** (no FastCGI). El módulo debe estar instalado a nivel servidor.
-
-**Verificar que esté registrado:**
 ```powershell
+# Reciclar (recarga uvicorn, equivale a reiniciar la app)
+Restart-WebAppPool -Name "AppPool_Turnero"
+
+# Log en vivo
+Get-Content "C:\inetpub\Sites\Turnero\logs\wrapper_stdout.log" -Wait -Tail 50
+
+# Verificar httpPlatformHandler instalado
 Get-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST' `
     -filter "system.webServer/globalModules/add[@name='httpPlatformHandler']" -name "."
-# Sin resultado → instalar desde Web Platform Installer o descargar el MSI de Microsoft.
+
+# Probar arranque manual (fuera de IIS)
+cd C:\inetpub\Sites\Turnero
+call start_uvicorn.bat 8765
 ```
 
-**Conflicto de handlers — el problema más frecuente:**  
-Si IIS devuelve 404 o ejecuta el `.bat` como descarga, el handler de `StaticFile` o `iisnode` está tomando el request antes que `httpPlatformHandler`.  
-En `web.config` el handler ya usa `path="*" verb="*"` — si aun así falla, agregar `<clear />` antes del `<add>`:
+---
+
+## Troubleshooting
+
+| Síntoma | Causa | Acción |
+|---|---|---|
+| `500.19` al cargar | `web.config` mal formado o sin permisos de lectura | Revisar XML; verificar `icacls` |
+| `502.5` proceso no arranca | Ruta del venv incorrecta o módulos no instalados | Ejecutar `call start_uvicorn.bat 8765` manualmente y ver salida |
+| IIS descarga el `.bat` | `httpPlatformHandler` no registrado | Instalar módulo; agregar `<clear />` en `<handlers>` |
+| `404` en todas las rutas | Handler de `StaticFile` toma precedencia | Agregar `<clear />` antes del `<add name="Turnero" .../>` |
+| Sin estáticos | `collectstatic` no ejecutado o permisos en `staticfiles/` | Re-ejecutar `collectstatic`; verificar `icacls` |
+| Error de DB al iniciar | Driver ODBC no instalado o credenciales incorrectas | Verificar `SQL Server Native Client 11.0` en el servidor; revisar `.env` |
+
+### `<clear />` en handlers (usar solo si hay conflicto confirmado)
 
 ```xml
 <handlers>
     <clear />
-    <add name="GestionGestores" path="*" verb="*"
+    <add name="Turnero" path="*" verb="*"
          modules="httpPlatformHandler" resourceType="Unspecified" />
 </handlers>
 ```
 
-> ⚠ `<clear />` elimina todos los handlers heredados del servidor. Usarlo solo si hay conflicto confirmado; las reglas de static/media en `<rewrite>` ya protegen esos paths.
-
-**El bat recibe el puerto como primer argumento** — httpPlatformHandler inyecta `%HTTP_PLATFORM_PORT%` en `web.config`:
-```xml
-arguments="/c &quot;%~dp0start_uvicorn.bat&quot; %HTTP_PLATFORM_PORT%"
-```
-No hardcodear el puerto en el bat.
+> Las reglas `<rewrite>` en `web.config` ya protegen `static/` y `media/`. `<clear />` elimina todos los handlers heredados del servidor, lo cual puede romper otros sitios si el config se hereda.
 
 ---
 
-## Prueba de arranque manual
+## Actualizar código en producción
 
 ```cmd
-cd C:\inetpub\Sites\Gestion_Gestores
-call start_uvicorn.bat 8765
-REM → http://127.0.0.1:8765  (Ctrl+C para detener)
+cd C:\inetpub\Sites\Turnero
+
+REM 1. Copiar nuevos archivos
+xcopy /E /I /Y "C:\ruta\fuente\*" "."
+
+REM 2. Instalar nuevas dependencias (si hubiera)
+venv\Scripts\python.exe -m pip install -r requirements.txt
+
+REM 3. Migraciones (solo tablas managed=True: MotivoCierre, LlamadaTurno)
+venv\Scripts\python.exe manage.py migrate
+
+REM 4. Recolectar estáticos
+venv\Scripts\python.exe manage.py collectstatic --noinput
+
+REM 5. Reciclar App Pool
+powershell -Command "Restart-WebAppPool -Name 'AppPool_Turnero'"
 ```
-
-Si arranca manual pero no desde IIS → problema de permisos del AppPool o handler no registrado.
-
----
-
-## Diagnóstico rápido
-
-```powershell
-# Últimas 50 líneas del log de uvicorn
-Get-Content "C:\inetpub\Sites\Gestion_Gestores\logs\wrapper_stdout.log" -Tail 50
-
-# Reiniciar IIS
-iisreset /restart
-```
-
-| Síntoma                        | Causa probable                                      |
-|--------------------------------|-----------------------------------------------------|
-| 500.19 al cargar el sitio      | `web.config` mal formado o permisos de lectura      |
-| 502.5 / proceso no arranca     | Ruta del venv incorrecta en `start_uvicorn.bat`     |
-| Página en blanco / sin static  | `collectstatic` no ejecutado o permisos en `staticfiles/` |
-| Login LDAP falla               | `DJANGO_CTL_LDAP_*` no configurados en `.env`       |
-| Error de DB al iniciar         | Credenciales `SQL_USER_CONS`/`SQL_PASS_CONS` o driver no instalado |
 
 
